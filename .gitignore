@@ -6,6 +6,7 @@
 *.exe
 *.o
 *.so
+*.pyc
 
 # Packages #
 ############
@@ -58,4 +59,5 @@ Thumbs.db
 
 # Files custom for this repo #
 #########################
-.ipynb_checkpoints
+notebooks/Untitled.ipynb
+*.ipynb_checkpoints
