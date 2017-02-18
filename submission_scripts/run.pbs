@@ -1,0 +1,69 @@
+#!/bin/sh
+# Problem: maze2
+# PID: 2017-2-14
+#
+#PBS -N adv_maze2
+#PBS -o maze2.pbs.out
+#PBS -j oe
+#PBS -M munkm@ornl.gov
+#PBS -l walltime=20:00
+#PBS -l nodes=1:ppn=16,pmem=8000mb
+LAUNCHER=/opt/openmpi-1.6.5-gcc/bin/mpiexec
+LAUNCHER_ARGS=""
+ADVANTG=/home/m15/install/advantg/bin/advantg
+
+cd "/home/m15/munk_analysis/demonstration/cadis"
+cd "maze2"
+echo "Beginning PBS execution at $(date) in $(pwd)"
+echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+"${ADVANTG}" "maze2.py"
+echo ">>> Finished PBS execution at $(date)"
+cd "../maze1"
+echo "Beginning PBS execution at $(date) in $(pwd)"
+echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+"${ADVANTG}" "maze1.py"
+echo ">>> Finished PBS execution at $(date)"
+cd "../prob_1"
+echo "Beginning PBS execution at $(date) in $(pwd)"
+echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+"${ADVANTG}" "prob_1.py"
+echo ">>> Finished PBS execution at $(date)"
+cd "../prob_2"
+echo "Beginning PBS execution at $(date) in $(pwd)"
+echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+"${ADVANTG}" "prob_2.py"
+echo ">>> Finished PBS execution at $(date)"
+cd "../prob_4"
+echo "Beginning PBS execution at $(date) in $(pwd)"
+echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+"${ADVANTG}" "prob_4.py"
+echo ">>> Finished PBS execution at $(date)"
+cd "../therapy"
+echo "Beginning PBS execution at $(date) in $(pwd)"
+echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+"${ADVANTG}" "therapy.py"
+echo ">>> Finished PBS execution at $(date)"
+cd "../beam"
+echo "Beginning PBS execution at $(date) in $(pwd)"
+echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+"${ADVANTG}" "beam.py"
+echo ">>> Finished PBS execution at $(date)"
+cd "../ueki20"
+echo "Beginning PBS execution at $(date) in $(pwd)"
+echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+"${ADVANTG}" "ueki20.py"
+echo ">>> Finished PBS execution at $(date)"
+cd "../ueki35"
+echo "Beginning PBS execution at $(date) in $(pwd)"
+echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+"${ADVANTG}" "ueki35.py"
+echo ">>> Finished PBS execution at $(date)"
