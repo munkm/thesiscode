@@ -1,9 +1,9 @@
 #!/bin/sh
-# Problem: maze2
+# Problem: demonstration 
 # PID: 2017-2-14
 #
-#PBS -N adv_maze2
-#PBS -o maze2.pbs.out
+#PBS -N adv_demo
+#PBS -o demo_probs.pbs.out
 #PBS -j oe
 #PBS -M munkm@ornl.gov
 #PBS -l walltime=20:00
