@@ -1,0 +1,31 @@
+#!/bin/sh
+# Problem: maze2
+# PID: 2017-2-14
+#
+#PBS -N demo_MC
+#PBS -o mcnp.pbs.out
+#PBS -j oe
+#PBS -M munkm@ornl.gov
+#PBS -l walltime=4:00:00
+#PBS -l nodes=1:ppn=16
+LAUNCHER=/opt/openmpi-1.6.5-gcc/bin/mpiexec
+LAUNCHER_ARGS=""
+ADVANTG=/home/m15/install/advantg/bin/advantg
+MCNP=/projects/MCNP5_v1.6/MCNP_CODE/bin/mcnp5.mpi
+INPUTS=( maze1 maze2 maze1_up maze2_up prob_1 prob_2 prob_4 therapy beam ueki20 ueki35 )
+
+cd "/home/m15/munk_analysis/demonstration/cadis"
+for INPUT in "${INPUTS[@]}"
+do
+  cd "./${INPUT}/"
+  mkdir "./mcnp"
+  rm "./mcnp/"*
+  cp "./output/"*inp* "./mcnp/"
+  cd "./mcnp"
+  echo "Beginning PBS execution at $(date) for ${INPUT} in $(pwd)"
+  echo ">>> PBS nodes: ${PBS_NUM_NODES}"
+  echo ">>> PBS cores per node: ${PBS_NUM_PPN}"
+  "${LAUNCHER}" "${MCNP}" "i=inp o=out"
+  echo ">>> Finished PBS execution for ${INPUT} at $(date)"
+  cd "./../../"
+done
