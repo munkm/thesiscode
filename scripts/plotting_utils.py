@@ -23,7 +23,8 @@ u'metric_four', u'metric_one', u'metric_six', u'metric_three', u'metric_two']
 #-----------------------------------------------------------------------------#
 
 
-def energy_histogram(energy_bound, tally_result, title='default title',
+def energy_histogram(energy_bound, tally_result, savepath, plot_title='default title',
+        x_title='Energy Bins (MeV)', y_title='Tally Result',
         color='#412966', lowest_bin=1e-10):
     if len(energy_bound) == len(tally_result):
         print("energy groups not binned. using %s as lowest bound" %lowest_bin)
@@ -40,11 +41,27 @@ def energy_histogram(energy_bound, tally_result, title='default title',
              "xtick.direction": u'in'})
     plt.hist(pseudodata, bins=energy_bins, weights=tally_result,
             histtype='step', fill=False, linewidth=1, color=color)
-    plt.title('%s' %title)
-    plt.xlabel('Energy Bins (MeV)')
-    plt.ylabel('Relative Error')
+    plt.title('%s' %plot_title)
+    plt.xlabel('%s' %x_title)
+    plt.ylabel('%s' %y_title)
     plt.xscale('log')
-    plt.savefig('/Users/madicken/Documents/wwdebug/sillyplot.png', hbox_inches='tight')
+    plt.savefig('%s' %(savepath), hbox_inches='tight')
+
+def boxbyenergy(data, plot_title, x_title, y_title, savepath, log_scale=False):
+    plot_title = str(plot_title)
+    x_title = str(x_title)
+    y_title = str(y_title)
+
+    sns.set_style("whitegrid")
+    plt.figure(figsize=(12,5))
+    if log_scale==True:
+        plt.yscale('log')
+    pal = sns.diverging_palette(10, 240, n=27)
+    sns.boxplot(data=data, palette=pal, linewidth=1.25)
+    plt.title(plot_title)
+    plt.xlabel(x_title)
+    plt.ylabel(y_title)
+    plt.savefig('%s' %(savepath), hbox_inches='tight')
 
 def violinbyenergy(data, plot_title, x_title, y_title, savepath):
     plot_title = str(plot_title)
@@ -88,7 +105,6 @@ def stripbygroup(data, plot_title, x_title, x_names, y_title, savepath):
     plt.xticks(np.arange(len(names)), names, rotation=45)
     plt.gcf().subplots_adjust(bottom=0.20)
     plt.savefig('%s' %(savepath), hbox_inches='tight')
-
 
 #-----------------------------------------------------------------------------#
 if __name__ == '__main__':
