@@ -12,6 +12,7 @@ from __future__ import (division, absolute_import, print_function, )
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
+from matplotlib import gridspec
 ###############################################################################
 
 # Default Values for various things
@@ -105,6 +106,59 @@ def stripbygroup(data, plot_title, x_title, x_names, y_title, savepath):
     plt.xticks(np.arange(len(names)), names, rotation=45)
     plt.gcf().subplots_adjust(bottom=0.20)
     plt.savefig('%s' %(savepath), hbox_inches='tight')
+
+def statscatter(x1, x2, x4, y, savepath, metric_name='default metric name',
+                y_name='Tally Relative Error'):
+    '''This particular plot is not going to be particularly flexible. It will
+    return a line of several plots that show the correlation between a single y
+    dataset and the mean (x1), median (x2), mean/median (x1/x2), and the
+    variance (x4) of the anisotropy data specified.'''
+
+    fig = plt.figure(figsize=(14,3.5))
+    pal=sns.cubehelix_palette(12)
+    title = '%s Statistics, by Energy Group, Compared to %s' %(metric_name,
+            y_name)
+    fig.suptitle(title)
+    gs = gridspec.GridSpec(2,107)
+    gs.update(wspace=0.025)
+    sns.set_style("ticks",
+                  {"ytick.direction": u'in',
+                   "xtick.direction": u'in'})
+    sns.despine()
+
+    ax1 = fig.add_subplot(gs[:,0:21])
+    ax1.scatter(x1,y, color=pal[6])
+    ax1.set_ylabel(y_name)
+    ax1.set_xlabel("Mean Value")
+
+    ax2 = fig.add_subplot(gs[:,25:46])
+    ax2.scatter(x2,y, color=pal[7])
+    ax2.get_yaxis().set_ticklabels([])
+    ax2.set_xlabel("Median Value")
+
+
+    ax3 = fig.add_subplot(gs[:,50:71])
+    ax3.scatter(x1/x2,y, color=pal[8])
+    ax3.get_yaxis().set_ticklabels([])
+    ax3.set_xlabel("Mean/Median")
+
+    ax4 = fig.add_subplot(gs[:,75:96])
+    ax4.scatter(x4,y, color=pal[9])
+    ax4.get_yaxis().set_ticklabels([])
+    ax4.set_xlabel("Metric Variance")
+
+    ax5 = fig.add_subplot(gs[:,100:107])
+    ax5.hist(y, bins=15,
+    orientation='horizontal', color=pal[10])
+    ax5.get_yaxis().set_ticklabels([])
+    ax5.get_xaxis().set_ticks([])
+    ax5.yaxis.set_label_position("right")
+    ax5.set_ylabel("%s Distribution" %y_name, rotation=270, labelpad=15)
+
+    plt.subplots_adjust(top=0.87)
+    plt.gcf().subplots_adjust(bottom=0.20)
+    plt.setp(ax.get_xticklabels(), rotation=30
+    plt.savefig('%s' %(savepath),bbox_inches='tight')
 
 #-----------------------------------------------------------------------------#
 if __name__ == '__main__':
