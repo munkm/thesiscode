@@ -18,7 +18,7 @@ import seaborn as sns
 
 class MCNPOutput(object):
     def __init__(self, outputlocation, tallynumber='44'):
-        self.ouputlocation = str(outputlocation)
+        self.outputlocation = str(outputlocation)
         self.title = self.outputlocation
         self.tallynumber = tallynumber
         pass
@@ -116,8 +116,54 @@ class H5Output(object):
 
         return metricdata
 
-    def get_paths(self):
-        pass
+    def get_data_statistics(self):
+        '''This function gets the average value and standard deviation for each
+        metric by energy group and returns two matrices: one with dims
+        (metric*no.groups) corresponding to the averages, and the other for the
+        standard deviations. Two lists will also be outputted corresponding to
+        the metric names and the group numbers'''
+
+        # open the file as readonly
+        f=h5py.File('%s' %(self.outputlocation), 'r')
+
+        # set up the labelling lists
+        metric_names = f.keys()
+        group_numbers = f['forward_anisotropy'].keys()
+
+        # set up empty arrays for data storage before loading it in
+        no_metrics = len(metric_names)
+        no_groups = len(group_numbers)
+        data = np.zeros([no_metrics, no_groups, 4])
+
+        # now set up the loops to calculate metrics on subsets of data
+        for metric in metric_names:
+            metric_location = metric_names.index(metric)
+            for group in group_numbers:
+                group_location = group_numbers.index(group)
+
+                # pull the chunk of data associated with metric and group from
+                # the file.
+                data_chunk = f[metric][group][:]
+
+                # calculate the statistics on the data chunk and put them into
+                # an array.
+                mean = np.mean(data_chunk)
+                median = np.median(data_chunk)
+                std = np.std(data_chunk)
+                var = np.var(data_chunk)
+                stats = np.array([mean, median, std, var])
+
+                data[metric_location,group_location,:] = stats
+
+        statistics = ['mean', 'median', 'standard deviation', 'variance']
+
+        stats_container = {'metrics' : metric_names,
+                           'group numbers' : group_numbers,
+                           'statistics' : statistics,
+                           'data' : data}
+
+        return stats_container
+
 
 #-----------------------------------------------------------------------------#
 
