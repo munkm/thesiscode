@@ -9,13 +9,15 @@ from __future__ import (division, absolute_import, print_function, )
 #-----------------------------------------------------------------------------#
 import numpy as np
 from analysis import MCNPOutput
-from plotting_utils import ( violinbyenergy, stripbygroup, violinbygroup, names,
-                          energy_histogram )
+from plotting_utils import ( violinbyenergy, stripbyenergy, boxbyenergy,
+                           stripbygroup, violinbygroup,
+                           boxbygroup, names, energy_histogram )
 import os
 ###############################################################################
 
 
-def do_single_analysis(base_directory_path, analysis_directory_name='analysis',
+def do_single_analysis(base_directory_path, method_type='cadis',
+        analysis_directory_name='analysis',
         group_numbers=[], metrics=[], tally_number='44',
         plot_violins_by_group=False, plot_strip_by_group=False,
         plot_violins_by_energy=False, plot_FoM_convergence=False,
@@ -56,24 +58,54 @@ def do_single_analysis(base_directory_path, analysis_directory_name='analysis',
                            plot_title='%s Distribution, by Energy group' %(name),
                            x_title='Energy Group No.',
                            y_title='Relative Metric Distribution',
-                           savepath=dirs['analysis_directory']+'/%s_violin.png' %metric)
+                           savepath=dirs['analysis_directory']+'/%s_violin.png' %metric,
+                           log_scale=True)
+        pass
+
+    if plot_boxes_by_group == True:
+        metrics = datanames['metric_names']
+        for metric in metrics:
+            groupdata =  \
+                   H5output(filenames['anisotropy_file']).get_data_by_group(metric)
+            name = metric_names[metric]
+            boxbyenergy(data=groupdata['data'],
+                           plot_title='%s Distribution, by Energy group' %(name),
+                           x_title='Energy Group No.',
+                           y_title='Relative Metric Distribution',
+                           savepath=dirs['analysis_directory']+'/%s_box.png' %metric,
+                           log_scale=True)
         pass
 
     if plot_strip_by_group == True:
         metrics = datanames['metric_names']
         for metric in metrics:
             groupdata =  \
-                   H5output(filenames['anisotropy_file']).get_data_by_group(metric)
-            newdata = np.random.choice(groupdata['data']
+                   H5output(filenames['anisotropy_file']).get_dataset_by_group(metric)
             name = metric_names[metric]
             stripbyenergy(data=groupdata['data'],
                            plot_title='%s Distribution, by Energy group' %(name),
                            x_title='Energy Group No.',
                            y_title='Relative Metric Distribution',
-                           savepath=dirs['analysis_directory']+'/%s_strip.png' %metric)
+                           savepath=dirs['analysis_directory']+'/%s_strip.png' %metric,
+                           log_scale=True)
         pass
 
-    if plot_violins_by_energy == True:
+    if plot_strip_for_energy == True:
+        groups = datanames['energy_groups']
+        for group in groups:
+            groupdata =  \
+                   H5output(filenames['anisotropy_file']).get_dataset_by_energy(group)
+            name = group_names[group]
+            stripbygroup(data=groupdata['data'],
+                           plot_title='%s Distribution, by Metric' %(name),
+                           x_title='Metric Type',
+                           x_names=groupdata['names']
+                           y_title='Relative Metric Distribution',
+                           savepath=dirs['analysis_directory']+'/%s_strip.png' %group,
+                           log_scale=True)
+        pass
+
+    if plot_violins_for_energy == True:
         pass
 
     MCNP_data = MCNPOutput(filennames['mcnp_output'],
@@ -92,7 +124,7 @@ def do_single_analysis(base_directory_path, analysis_directory_name='analysis',
     if save_FoM_data == True:
         pass
 
-    anisotropy_stats = H5Output(filenames['']).get_data_statistics()
+    anisotropy_stats = H5Output(filenames['anisotropy_file']).get_data_statistics()
 
     if plot_anisotropy_with_tallydata == True:
         from plotting_utils import statscatter
