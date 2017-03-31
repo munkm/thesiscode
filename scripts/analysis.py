@@ -45,6 +45,46 @@ class H5Output(object):
 
         return all_data
 
+    def get_datanames(self):
+        f = h5py.File('%s' %(self.outputlocation),'r')
+        metric_names = f.keys()
+        energy_groups = f[metric_names[0]].keys()
+
+        names = {'metric_names' : metric_names,
+                 'energy_groups' : energy_groups}
+
+        return names
+
+    def get_dataset_by_group(self, metric_name, num_samples = 1500,
+                             flatten_data=True):
+        ''' This function returns a dict with the names of eeach energy group
+        and a matrix of data corresponding to a sample of anisotropy data (n
+        samples) for a specified metric name.  '''
+
+        full_dataset = self.get_data_by_group(metric_name,
+                flatten_data=flatten_data)
+        full_data = full_dataset['data']
+
+        size = np.shape(full_data)
+        num_groups = size[-1]
+
+        data = np.zeros(num_samples)
+        for group in np.arange(num_groups):
+            dataset = full_data[:,group]
+            newdata = np.random.choice(dataset,num_samples)
+            data = np.column_stack((data,newdata))
+
+        data = data[:,1:]
+
+        groupdata = {'names' : full_dataset['names'],
+                     'data' : data,
+                     'description': '%s count sample of ' %(num_samples)
+                           + 'anisotropy data for all energy groups, metric %s'
+                     %(metric_name)}
+
+        return groupdata
+
+
     def get_data_by_group(self, metric_name, flatten_data=True):
         '''This function returns a dict with the names of each group and a
         matrix of data corresponding to the anisotropy data (groupwise) for a
