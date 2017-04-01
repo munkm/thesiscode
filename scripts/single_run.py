@@ -19,8 +19,10 @@ import os
 def do_single_analysis(base_directory_path, method_type='cadis',
         analysis_directory_name='analysis',
         group_numbers=[], metrics=[], tally_number='44',
-        plot_violins_by_group=False, plot_strip_by_group=False,
-        plot_violins_by_energy=False, plot_FoM_convergence=False,
+        plot_boxes_for_metric=False, plot_boxes_for_energy=False,
+        plot_violins_for_metric=False, plot_strip_for_metric=False,
+        plot_strip_for_energy=False, plot_violins_for_energy=False,
+        plot_FoM_convergence=False,
         plot_RE_by_bin=True, plot_tally_results=True,
         save_FoM_data=False, plot_anisotropy_with_tallydata=False,
         logfile_name='logger.log'):
@@ -32,80 +34,107 @@ def do_single_analysis(base_directory_path, method_type='cadis',
     filnames, directories = get_paths(base_directory_path,
                                           analysis_directory_name)
 
-    input_flags={'violins_by_group': plot_violins_by_group,
-            'violins_by_energy': plot_violins_by_energy,
-            'strip_by_group':plot_strip_by_group,
+    input_flags={'violins_for_metric': plot_violins_for_metric,
+            'violins_for_energy': plot_violins_for_energy,
+            'boxes_for_metric': plot_boxes_for_metric,
+            'boxes_for_energy': plot_boxes_for_energy,
+            'strip_for_metric': plot_strip_for_metric,
+            'strip_for_energy': plot_strip_for_energy,
             'FoM convergence': plot_FoM_convergence,
             'Relative Error by bin': plot_RE_by_bin,
             'Tally Result' : plot_tally_results,
             'save FoM data' : save_FoM_data,
             'Plot anisotropy correlations' : plot_anisotropy_with_tallydata,
-            'base directory' : base_directory_path,
-            'analysis data directory' : full_analysis_dir
+            'base directory' : directories['top_directory'],
+            'analysis data directory' : directories['analysis_directory']
             }
 
     verify_input_flags(input_flags)
 
-    datanames = H5Ouput(filenames['anisotropy_file']).get_datanames()
+    anisotropy_file = H5Output(filenames['anisotropy_file'])
+    analysis_dir = directories['analysis_directory']
 
-    if plot_violins_by_group == True:
+    datanames = anisotropy_file.get_datanames()
+
+    if plot_violins_for_metric == True:
         metrics = datanames['metric_names']
         for metric in metrics:
-            groupdata =  \
-                   H5output(filenames['anisotropy_file']).get_data_by_group(metric)
+            groupdata =  anisotropy_file.get_data_by_metric(metric)
             name = metric_names[metric]
             violinbyenergy(data=groupdata['data'],
                            plot_title='%s Distribution, by Energy group' %(name),
                            x_title='Energy Group No.',
                            y_title='Relative Metric Distribution',
-                           savepath=dirs['analysis_directory']+'/%s_violin.png' %metric,
+                           savepath=analysis_dir+'/%s_violin.png' %metric,
                            log_scale=True)
         pass
 
-    if plot_boxes_by_group == True:
+    if plot_boxes_for_metric == True:
         metrics = datanames['metric_names']
         for metric in metrics:
-            groupdata =  \
-                   H5output(filenames['anisotropy_file']).get_data_by_group(metric)
+            groupdata =  anisotropy_file.get_data_by_metric(metric)
             name = metric_names[metric]
             boxbyenergy(data=groupdata['data'],
                            plot_title='%s Distribution, by Energy group' %(name),
                            x_title='Energy Group No.',
                            y_title='Relative Metric Distribution',
-                           savepath=dirs['analysis_directory']+'/%s_box.png' %metric,
+                           savepath=analysis_dir+'/%s_box.png' %metric,
                            log_scale=True)
         pass
 
-    if plot_strip_by_group == True:
+    if plot_strip_for_metric == True:
         metrics = datanames['metric_names']
         for metric in metrics:
-            groupdata =  \
-                   H5output(filenames['anisotropy_file']).get_dataset_by_group(metric)
+            groupdata =  anisotropy_file.get_dataset_by_metric(metric)
             name = metric_names[metric]
             stripbyenergy(data=groupdata['data'],
                            plot_title='%s Distribution, by Energy group' %(name),
                            x_title='Energy Group No.',
                            y_title='Relative Metric Distribution',
-                           savepath=dirs['analysis_directory']+'/%s_strip.png' %metric,
+                           savepath=analysis_dir+'/%s_strip.png' %metric,
                            log_scale=True)
         pass
 
     if plot_strip_for_energy == True:
         groups = datanames['energy_groups']
         for group in groups:
-            groupdata =  \
-                   H5output(filenames['anisotropy_file']).get_dataset_by_energy(group)
+            groupdata =  anisotropy_file.get_dataset_by_energy(group)
             name = group_names[group]
-            stripbygroup(data=groupdata['data'],
+            stripbymetric(data=groupdata['data'],
                            plot_title='%s Distribution, by Metric' %(name),
                            x_title='Metric Type',
                            x_names=groupdata['names']
-                           y_title='Relative Metric Distribution',
-                           savepath=dirs['analysis_directory']+'/%s_strip.png' %group,
+                           y_title='Relative Metric Distribution Density',
+                           savepath=analysis_dir+'/%s_strip.png' %group,
                            log_scale=True)
         pass
 
     if plot_violins_for_energy == True:
+        groups = datanames['energy_groups']
+        for group in groups:
+            groupdata =  anisotropy_file.get_dataset_by_energy(group)
+            name = group_names[group]
+            violinbymetric(data=groupdata['data'],
+                           plot_title='%s Distribution, by Metric' %(name),
+                           x_title='Metric Type',
+                           x_names=groupdata['names']
+                           y_title='Relative Metric Distribution',
+                           savepath=analysis_dir+'/%s_strip.png' %group,
+                           log_scale=True)
+        pass
+
+    if plot_boxes_for_energy == True:
+        groups = datanames['energy_groups']
+        for group in groups:
+            groupdata =  anisotropy_file.get_dataset_by_energy(group)
+            name = group_names[group]
+            boxesbymetric(data=groupdata['data'],
+                           plot_title='%s Distribution, by Metric' %(name),
+                           x_title='Metric Type',
+                           x_names=groupdata['names']
+                           y_title='Box of Metric Distribution',
+                           savepath=analysis_dir+'/%s_strip.png' %group,
+                           log_scale=True)
         pass
 
     MCNP_data = MCNPOutput(filennames['mcnp_output'],
@@ -124,7 +153,7 @@ def do_single_analysis(base_directory_path, method_type='cadis',
     if save_FoM_data == True:
         pass
 
-    anisotropy_stats = H5Output(filenames['anisotropy_file']).get_data_statistics()
+    anisotropy_stats = anisotropy_file.get_data_statistics()
 
     if plot_anisotropy_with_tallydata == True:
         from plotting_utils import statscatter
