@@ -98,10 +98,12 @@ def stripbyenergy(data, plot_title, x_title, y_title, savepath, log_scale=False)
         plt.yscale('log')
     plt.savefig('%s' %(savepath), hbox_inches='tight')
 
-def violinbygroup(data, plot_title, x_title, x_names, y_title, savepath):
+def violinbymetric(data, plot_title, x_title, x_names, y_title, savepath,
+        log_scale=False):
     sns.set_style("whitegrid")
     plt.figure(figsize=(10,5))
-    plt.yscale('log')
+    if log_scale == True:
+        plt.yscale('log')
     pal=sns.color_palette("YlOrRd", 16)
     sns.violinplot(data=data[:,1:], palette=pal[8:], linewidth=1, cut=0,
                    scale='width', gridsize=100, inner='box', log_bins=True,
@@ -113,12 +115,29 @@ def violinbygroup(data, plot_title, x_title, x_names, y_title, savepath):
     plt.gcf().subplots_adjust(bottom=0.20)
     plt.savefig('%s' %(savepath), hbox_inches='tight')
 
-def stripbygroup(data, plot_title, x_title, x_names, y_title, savepath):
+def stripbymetric(data, plot_title, x_title, x_names, y_title, savepath,
+        log_scale=False):
     sns.set_style("whitegrid")
     plt.figure(figsize=(10,5))
     pal=sns.color_palette("YlOrRd", 16)
-    plt.yscale('log')
+    if log_scale == True:
+        plt.yscale('log')
     sns.stripplot(data=data, palette=pal[8:], jitter=True, size=1)
+    plt.title(plot_title)
+    plt.xlabel(x_title)
+    plt.ylabel(y_title)
+    plt.xticks(np.arange(len(names)), names, rotation=45)
+    plt.gcf().subplots_adjust(bottom=0.20)
+    plt.savefig('%s' %(savepath), hbox_inches='tight')
+
+def boxbymetric(data, plot_title, x_title, x_names, y_title, savepath,
+        log_scale=False):
+    sns.set_style("whitegrid")
+    plt.figure(figsize=(10,5))
+    pal=sns.color_palette("YlOrRd", 16)
+    if log_scale == True:
+        plt.yscale('log')
+    sns.boxplot(data=data, palette=pal[8:], linewidth=1)
     plt.title(plot_title)
     plt.xlabel(x_title)
     plt.ylabel(y_title)

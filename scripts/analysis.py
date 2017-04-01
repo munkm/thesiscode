@@ -55,13 +55,13 @@ class H5Output(object):
 
         return names
 
-    def get_dataset_by_group(self, metric_name, num_samples = 1500,
+    def get_dataset_by_metric(self, metric_name, num_samples = 1500,
                              flatten_data=True):
         ''' This function returns a dict with the names of eeach energy group
         and a matrix of data corresponding to a sample of anisotropy data (n
         samples) for a specified metric name.  '''
 
-        full_dataset = self.get_data_by_group(metric_name,
+        full_dataset = self.get_data_by_metric(metric_name,
                 flatten_data=flatten_data)
         full_data = full_dataset['data']
 
@@ -76,16 +76,16 @@ class H5Output(object):
 
         data = data[:,1:]
 
-        groupdata = {'names' : full_dataset['names'],
+        metricdata = {'names' : full_dataset['names'],
                      'data' : data,
                      'description': '%s count sample of ' %(num_samples)
-                           + 'anisotropy data for all energy groups, metric %s'
+                           + 'anisotropy data for all energy groups, %s'
                      %(metric_name)}
 
-        return groupdata
+        return metricdata
 
 
-    def get_data_by_group(self, metric_name, flatten_data=True):
+    def get_data_by_metric(self, metric_name, flatten_data=True):
         '''This function returns a dict with the names of each group and a
         matrix of data corresponding to the anisotropy data (groupwise) for a
         specifed metric name If flatten_data is set to False, then the data
@@ -115,14 +115,14 @@ class H5Output(object):
         # clear out the row of zeros that appears from row_stack
         data = data[:,1:]
 
-        groupdata = {'names' : names,
+        metricdata = {'names' : names,
                      'data' : data,
-                     'description': 'anisotropy data for all energy groups, metric %s'
+                     'description': 'anisotropy data for all energy groups, %s'
                      %metric_name}
 
-        return groupdata
+        return metricdata
 
-    def get_data_by_metric(self, group_number, flatten_data=True):
+    def get_data_by_energy(self, group_number, flatten_data=True):
         '''This function will return a dict of the names of each metric that
         have been aquired and an array of data corresponding to the anisotropy
         data for each metric given a specified energy group number. If
@@ -138,9 +138,16 @@ class H5Output(object):
         data = np.zeros([matrix_size])
         names = []
 
+        if type(group_number) == int:
+            group_number = 'group_%03d' %group_number
+        elif type(group_number) == unicode or str:
+            group_number = group_number
+        else:
+            print('group number is not a recognized type')
+
         # loop through the data in the hdf5 file and load it in
         for metric in f:
-            subdata = f[metric]['group_%03d' %group_number][:].flatten()
+            subdata = f[metric][group_number][:].flatten()
             data = np.row_stack((data,subdata))
             names.append(metric)
 
@@ -150,11 +157,48 @@ class H5Output(object):
         # clear out the row of zeros that appears from row_stack
         data = data[:,1:]
 
-        metricdata = {'names': names,
+        groupdata = {'names': names,
                       'data': data,
-                      'description':'anisotropy data for all metrics, group %d' %group_number}
+                      'description':'anisotropy data for all metrics, energy %s'
+                                     %group_number}
 
-        return metricdata
+        return groupdata
+
+    def get_dataset_by_energy(self, group_number, num_samples = 1500,
+                             flatten_data=True):
+        ''' This function returns a dict with the names of eeach energy group
+        and a matrix of data corresponding to a sample of anisotropy data (n
+        samples) for a specified metric name.  '''
+
+        full_dataset = self.get_data_by_energy(group_number,
+                flatten_data=flatten_data)
+        full_data = full_dataset['data']
+
+        if type(group_number) == int:
+            group_number = 'group_%03d' %group_number
+        elif type(group_number) == unicode or str:
+            group_number = group_number
+        else:
+            print('group number is not a recognized type')
+
+        size = np.shape(full_data)
+        num_metrics = size[-1]
+
+        data = np.zeros(num_samples)
+        for metric in np.arange(num_metrics):
+            dataset = full_data[:,metric]
+            newdata = np.random.choice(dataset,num_samples)
+            data = np.column_stack((data,newdata))
+
+        data = data[:,1:]
+
+        groupdata = {'names' : full_dataset['names'],
+                     'data' : data,
+                     'description': '%s count sample of ' %(num_samples)
+                           + 'anisotropy data for all metrics, energy %s'
+                     %(group_number)}
+
+        return groupdata
 
     def get_data_statistics(self):
         '''This function gets the average value and standard deviation for each
