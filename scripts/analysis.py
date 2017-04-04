@@ -5,15 +5,19 @@
 #
 # <+Description+>
 ###############################################################################
+
 from __future__ import (division, absolute_import, print_function, )
+
 #-----------------------------------------------------------------------------#
+
 import numpy as np
 import h5py
 from mcnpoutput import TrackLengthTally
-from plotting_utils import ( violinbyenergy, stripbygroup, violinbygroup, names,
-                          energy_histogram )
+from plotting_utils import ( names, energy_histogram )
 from matplotlib import pyplot as plt
 import seaborn as sns
+import json
+
 ###############################################################################
 
 class MCNPOutput(object):
@@ -28,10 +32,57 @@ class MCNPOutput(object):
         output_fom = output_init.get_fom_data()
         output_tally = output_init.get_tally_result()
         output_timing = output_init.get_timing_data()
+
         output_container = {'timing' : output_timing,
                             'fom_trends' : output_fom,
                             'tally_data' : output_tally}
+
         return output_container
+
+#-----------------------------------------------------------------------------#
+
+class TimingOutput(object):
+    def __init__(self, timingfilelocation):
+        self.timingfile = str(timingfilelocation)
+        pass
+
+    def get_timing_data(self, extraopts=['strings']):
+        timingfile = open(self.timingfile)
+        tf = json.loads(timingfile.read())
+
+        defaults = [
+              'mix_mats',
+              'map_cells',
+              'Quantifying anisotropy with six anisotropy metrics.',
+              ]
+
+        ignore_keys = defaults + extraopts
+
+        timing_keys = tf.keys()
+        full_det_time = np.sum(tf.values())
+        newtime = full_det_time
+        for option in ignore_keys:
+            if option not in timing_keys:
+                print('%s not in timing output. ' %option
+                      +  ' Not including it in calculation')
+            else:
+                print('%s found in timing output. ' %option
+                      +  ' Subtracting value from total deterministic'
+                      +  ' runtime')
+
+                newtime = newtime-tf[option]
+
+        timing_data = {
+                'full_deterministic_time': full_det_time,
+                'adjusted_deterministic_time': newtime,
+                'excluded_keys' : ignore_keys,
+                'all_timing_keys': timing_keys,
+                'units':'seconds'
+                }
+
+        return timing_data
+
+
 
 #-----------------------------------------------------------------------------#
 
@@ -274,21 +325,78 @@ class AnisotropyAnalysis(object):
 class FOMAnalysis(object):
     ''' This class has the options to calculate simple FoM data for a single
     run.  '''
-    def __init__(self):
+    def __init__(self, MC_output_file, tallynumber, deterministic_timing_file):
+        self.mc_output_file = MC_output_file
+        self.tallynumber = tallynumber
+        self.det_timing_file = deterministic_timing_file
+
+        self.det_timingdata = TimingOutput(self.det_timing_file).get_timing_data()
+        self.mc_data = MCNPOutput(self.mc_output_file,
+                        tallynumber=self.tallynumber).get_tally_data()
         pass
 
-    def plot_fom_data(self):
-        return
+    def plot_fom_convergence(self):
+        pass
 
-    def calculate_all_foms(mcnpdict,denovodict):
+    def generate_fom_table(self):
+        pass
 
-        fom_results = {'fom_mc': fig1,
-                   'fom_max': fig2,
-                   'fom_min': fig3,
-                   'fom_mc_adj':fig4,
-                   'fom_max_adj':fig5,
-                   'fom_min_adj':fig6}
+    def calculate_all_foms(self):
+
+        std_fom = self.mc_data['fom_trends']['fom'][-1]
+        std_fom_mean = self.mc_data['fom_trends']['mean'][-1]
+        std_fom_err = self.mc_data['fom_trends']['error'][-1]
+        std_fom_pcount = self.mc_data['fom_trends']['nps'][-1]
+
+        std_fom_time = self.mc_data['timing']['mcrun_time']['time']
+        det_time = self.det_timingdata['adjusted_deterministic_time']
+
+        # make sure units match between files
+
+        det_units = self.det_timingdata['units']
+        mc_units = self.mc_data['timing']['mcrun_time']['units']
+        if det_units == 'seconds' and mc_units == 'minutes':
+            det_time = det_time/60.0
+        else:
+            print('The units for these timing files are different from expected'
+                  ' vals. det units are %s and mc units are %s' %(det_units, mc_units)
+                    )
+
+        total_time = std_fom_time + det_time
+
+        total_err = self.mc_data['tally_data']['tally_total_relative_error']
+        max_err = self.mc_data['tally_data']['relative_error'].max()
+        min_err = self.mc_data['tally_data']['relative_error'].min()
+
+        dat1 = self.make_fom_dict(std_fom_err, std_fom_time)
+        dat2 = self.make_fom_dict(max_err, std_fom_time)
+        dat3 = self.make_fom_dict(min_err, std_fom_time)
+        dat4 = self.make_fom_dict(total_err, total_time)
+        dat5 = self.make_fom_dict(max_err, total_time)
+        dat6 = self.make_fom_dict(min_err, total_time)
+
+        fom_results = {
+                   'fom_mc': dat1,
+                   'fom_max': dat2,
+                   'fom_min': dat3,
+                   'fom_mc_det':dat4,
+                   'fom_max_det':dat5,
+                   'fom_min_det':dat6,
+                   'particle_count': std_fom_pcount,
+                   }
+
         return fom_results
+
+    def make_fom_dict(self,err,time):
+
+        figure_of_merit = np.divide(1,(err**2)*time)
+
+
+        return {
+                'time': time,
+                'relative_error' : err,
+                'FOM' : figure_of_merit,
+                }
 
 #-----------------------------------------------------------------------------#
 
