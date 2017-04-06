@@ -8,10 +8,10 @@
 from __future__ import (division, absolute_import, print_function, )
 #-----------------------------------------------------------------------------#
 import numpy as np
-from analysis import MCNPOutput
+from analysis import MCNPOutput, FOMAnalysis
 from plotting_utils import ( violinbyenergy, stripbyenergy, boxbyenergy,
-                           stripbygroup, violinbygroup,
-                           boxbygroup, names, energy_histogram )
+                           stripbymetric, violinbymetric,
+                           boxbymetric, names, energy_histogram )
 import os
 ###############################################################################
 
@@ -40,23 +40,23 @@ def do_single_analysis(base_directory_path, method_type='cadis',
             'boxes_for_energy': plot_boxes_for_energy,
             'strip_for_metric': plot_strip_for_metric,
             'strip_for_energy': plot_strip_for_energy,
-            'FoM convergence': plot_FoM_convergence,
-            'Relative Error by bin': plot_RE_by_bin,
-            'Tally Result' : plot_tally_results,
-            'save FoM data' : save_FoM_data,
-            'Plot anisotropy correlations' : plot_anisotropy_with_tallydata,
-            'base directory' : directories['top_directory'],
-            'analysis data directory' : directories['analysis_directory']
+            'fom_convergence': plot_FoM_convergence,
+            'relative_error_by_bin': plot_RE_by_bin,
+            'tally_result' : plot_tally_results,
+            'save_fom_data' : save_FoM_data,
+            'plot_anisotropy_correlations' : plot_anisotropy_with_tallydata,
+            'base_directory' : directories['top_directory'],
+            'analysis_data_directory' : directories['analysis_directory']
             }
 
-    verify_input_flags(input_flags)
+    input_flags = verify_input_flags(input_flags, filenames, directories)
 
     anisotropy_file = H5Output(filenames['anisotropy_file'])
     analysis_dir = directories['analysis_directory']
 
     datanames = anisotropy_file.get_datanames()
 
-    if plot_violins_for_metric == True:
+    if input_flags('violins_for_metric') == True:
         metrics = datanames['metric_names']
         for metric in metrics:
             groupdata =  anisotropy_file.get_data_by_metric(metric)
@@ -69,7 +69,7 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            log_scale=True)
         pass
 
-    if plot_boxes_for_metric == True:
+    if input_flags('boxes_for_metric') == True:
         metrics = datanames['metric_names']
         for metric in metrics:
             groupdata =  anisotropy_file.get_data_by_metric(metric)
@@ -82,7 +82,7 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            log_scale=True)
         pass
 
-    if plot_strip_for_metric == True:
+    if input_flags('strip_for_metric') == True:
         metrics = datanames['metric_names']
         for metric in metrics:
             groupdata =  anisotropy_file.get_dataset_by_metric(metric)
@@ -95,7 +95,7 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            log_scale=True)
         pass
 
-    if plot_strip_for_energy == True:
+    if input_flags('strip_for_energy') == True:
         groups = datanames['energy_groups']
         for group in groups:
             groupdata =  anisotropy_file.get_dataset_by_energy(group)
@@ -103,13 +103,13 @@ def do_single_analysis(base_directory_path, method_type='cadis',
             stripbymetric(data=groupdata['data'],
                            plot_title='%s Distribution, by Metric' %(name),
                            x_title='Metric Type',
-                           x_names=groupdata['names']
+                           x_names=groupdata['names'],
                            y_title='Relative Metric Distribution Density',
                            savepath=analysis_dir+'/%s_strip.png' %group,
                            log_scale=True)
         pass
 
-    if plot_violins_for_energy == True:
+    if input_flags('violins_for_energy') == True:
         groups = datanames['energy_groups']
         for group in groups:
             groupdata =  anisotropy_file.get_dataset_by_energy(group)
@@ -117,13 +117,13 @@ def do_single_analysis(base_directory_path, method_type='cadis',
             violinbymetric(data=groupdata['data'],
                            plot_title='%s Distribution, by Metric' %(name),
                            x_title='Metric Type',
-                           x_names=groupdata['names']
+                           x_names=groupdata['names'],
                            y_title='Relative Metric Distribution',
                            savepath=analysis_dir+'/%s_strip.png' %group,
                            log_scale=True)
         pass
 
-    if plot_boxes_for_energy == True:
+    if input_flags('boxes_for_energy') == True:
         groups = datanames['energy_groups']
         for group in groups:
             groupdata =  anisotropy_file.get_dataset_by_energy(group)
@@ -131,31 +131,40 @@ def do_single_analysis(base_directory_path, method_type='cadis',
             boxesbymetric(data=groupdata['data'],
                            plot_title='%s Distribution, by Metric' %(name),
                            x_title='Metric Type',
-                           x_names=groupdata['names']
+                           x_names=groupdata['names'],
                            y_title='Box of Metric Distribution',
                            savepath=analysis_dir+'/%s_strip.png' %group,
                            log_scale=True)
         pass
 
-    MCNP_data = MCNPOutput(filennames['mcnp_output'],
-            tallynumber=tallynumber).get_tally_data()
+    FOM_init = FOMAnalysis(filenames['mcnp_output'], tallynumber,
+            filenames['timing_file'])
 
-    if plot_FoM_convergence == True:
+    all_foms = FOM_init.calculate_all_foms()
+
+    MCNP_data = FOM_data.mc_data
+
+    # MCNP_data = MCNPOutput(filennames['mcnp_output'],
+    #        tallynumber=tallynumber).get_tally_data()
+
+    if input_flags('fom_convergence') == True:
+        FOM_init.plot_fom_convergence()
         pass
 
-    if plot_RE_by_bin == True:
+    if input_flags('relative_error_by_bin') == True:
         bins = MCNP_data['tally_data']
         pass
 
-    if plot_tally_results == True:
+    if input_flags('tally_result') == True:
         pass
 
-    if save_FoM_data == True:
+    if input_flags('save_fom_data') == True:
+        FOM_init.generate_fom_table()
         pass
 
     anisotropy_stats = anisotropy_file.get_data_statistics()
 
-    if plot_anisotropy_with_tallydata == True:
+    if input_flags('plot_anisotropy_correlations') == True:
         from plotting_utils import statscatter
         err = MCNP_data['tally_data']['relative_error']
         data = anisotropy_data['data']
@@ -172,13 +181,56 @@ def do_single_analysis(base_directory_path, method_type='cadis',
         pass
 
 
-def verify_input_flags(inputs, filename='variables.log'):
+def verify_input_flags(input_flags, filenames, directories,
+        log_filename='variables.log'):
     ''' This function will print the value for each of the input flags to a
     textfile in the base analysis directory.'''
+    # logging.basicConfig(filename=log_filename, level=logging.INFO)
+    #
 
-    variables = None
 
-    return variables
+    dependencies={'violins_for_metric': ['anisotropy_file'],
+            'violins_for_energy': ['anisotropy_file'],
+            'boxes_for_metric': ['anisotropy_file'],
+            'boxes_for_energy': ['anisotropy_file'],
+            'strip_for_metric': ['anisotropy_file'],
+            'strip_for_energy': ['anisotropy_file'],
+            'fom_convergence': ['mcnp_output_file'],
+            'relative_error_by_bin': ['mcnp_output_file'],
+            'tally_result' : ['mcnp_output_file'],
+            'save_fom_data' : ['mcnp_output_file', 'timing_file'],
+            'plot_anisotropy_correlations' : ['mcnp_output_file',
+                           'anisotropy_file'],
+            }
+
+    input_flags2 = input_flags.copy()
+
+    for flag in input_flags:
+        if flag in dependencies and input_flags[flag] == True:
+            dependency = dependencies[flag]
+            results = dependency[:]
+            missing_files = ''
+            for i,item in enumerate(dependency):
+                if filenames[item] is not None:
+                    results[i] = filenames[item]
+                else:
+                    results[i] = ''
+                    missing_files += item + ' '
+            if all(results):
+                print("all dependencies required to compute %s found" %(flag))
+            else:
+                print("flag \"%s\" was set to False by override." %(flag)
+                      + " dependency %s was not found" %(missing_files))
+                input_flags2[flag]=False
+        elif input_flags[flag] == False:
+            print('%s will not be computed. Flag set to %s by user.' %(flag,
+                input_flags[flag]))
+        elif flag not in dependencies:
+            print('%s is equal to %s' %(flag, input_flags[flag]))
+        else:
+            print('Uh oh. Something\'s a little weird...')
+
+    return(input_flags2)
 
 def check_analysis(path, inputs):
     ''' This function checks for the existence of an analysis directory. It
@@ -186,6 +238,8 @@ def check_analysis(path, inputs):
     isn't overwriting any valuable direcotries or previously analyzed data. Do
     not choose to set overwrite=True unless you are ok with all of your
     previous data being erased.'''
+
+
 
     return
 
