@@ -333,12 +333,21 @@ class FOMAnalysis(object):
         self.det_timingdata = TimingOutput(self.det_timing_file).get_timing_data()
         self.mc_data = MCNPOutput(self.mc_output_file,
                         tallynumber=self.tallynumber).get_tally_data()
+
+        self.all_foms = {}
         pass
 
     def plot_fom_convergence(self):
         pass
 
     def generate_fom_table(self):
+
+        # check to see if foms have been generated
+        if not self.all_foms:
+            all_foms = self.calculate_all_foms()
+        else:
+            all_foms = self.all_foms
+
         pass
 
     def calculate_all_foms(self):
@@ -364,6 +373,11 @@ class FOMAnalysis(object):
 
         total_time = std_fom_time + det_time
 
+        time_data = {'mc_time': std_fom_time,
+                     'det_time' : det_time,
+                     'total_time' : total_time,
+                     'units': mc_units}
+
         total_err = self.mc_data['tally_data']['tally_total_relative_error']
         max_err = self.mc_data['tally_data']['relative_error'].max()
         min_err = self.mc_data['tally_data']['relative_error'].min()
@@ -383,14 +397,16 @@ class FOMAnalysis(object):
                    'fom_max_det':dat5,
                    'fom_min_det':dat6,
                    'particle_count': std_fom_pcount,
+                   'times_used' : time_data,
                    }
+
+        self.all_foms = fom_results
 
         return fom_results
 
     def make_fom_dict(self,err,time):
 
         figure_of_merit = np.divide(1,(err**2)*time)
-
 
         return {
                 'time': time,
