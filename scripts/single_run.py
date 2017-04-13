@@ -40,7 +40,7 @@ def do_single_analysis(base_directory_path, method_type='cadis',
     logger.info("acquiring files and directories in directory %s"
             %(base_directory_path))
     filenames, directories = get_paths(base_directory_path,
-                                          analysis_directory_name)
+                                       analysis_dirname=analysis_directory_name)
 
     input_flags={'violins_for_metric': plot_violins_for_metric,
             'violins_for_energy': plot_violins_for_energy,

@@ -325,7 +325,8 @@ class AnisotropyAnalysis(object):
 class FOMAnalysis(object):
     ''' This class has the options to calculate simple FoM data for a single
     run.  '''
-    def __init__(self, MC_output_file, tallynumber, deterministic_timing_file):
+    def __init__(self, MC_output_file, tallynumber, deterministic_timing_file,
+            datasavepath=''):
         self.mc_output_file = MC_output_file
         self.tallynumber = tallynumber
         self.det_timing_file = deterministic_timing_file
@@ -335,9 +336,41 @@ class FOMAnalysis(object):
                         tallynumber=self.tallynumber).get_tally_data()
 
         self.all_foms = {}
+
+        if datasavepath:
+            self.savepath = datasavepath
+        else:
+            import os
+            path1 = os.path.dirname(MC_output_file)
+            path2 = os.path.join(path1, '../analysis/')
+            path2 = os.path.normpath(path2)
+            self.savepath = path2
         pass
 
+    def print_tally_convergence(self, printtype='tex'):
+        self.gettallyframe(self.mc_data['fom_trends'], index='nps')
+
+        pass
+
+    def get_tallyframe(datadict, index=''):
+        if index:
+            ind_digits = [int(num) for num in datadict[index]]
+            tallyframe = pd.DataFrame(datadict, index=ind_digits)
+        else:
+            tallyframe = pd.DataFrame(datadict)
+
+        return tallyframe
+
+
     def plot_fom_convergence(self):
+        xdata = self.mc_data['fom_trends']['nps']
+        ydata = self.mc_data['fom_trends']['fom']
+        x_label = 'Number of Source Particles'
+        y_label = 'Figure of Merit'
+        plt_title = 'Figure of Merit Convergence'
+        plt_name = 'fom_converge'
+        self.generic_scatterplot(xdata, ydata, self.savepath, title=plt_title,
+                xlabel=x_label, ylabel=y_label, plot_name=plt_name)
         pass
 
     def generate_fom_table(self):
@@ -349,6 +382,20 @@ class FOMAnalysis(object):
             all_foms = self.all_foms
 
         pass
+
+    def generic_scatterplot(self, xdata, ydata, savepath, title='title',
+            xlabel='xlabel', ylabel='ylabel', plot_name='generic'):
+        sns.set_style('ticks',
+                      {'ytick.direction': u'in',
+                       'xtick.direction': u'in'})
+        pal = sns.cubehelix_palette()
+        x=xdata
+        y=ydata
+        plt.scatter(x,y, s=26, c=pal[3])
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.savefig('%s/%s.png' %(savepath,plot_name), hbox_inches='tight')
 
     def calculate_all_foms(self):
 
