@@ -24,7 +24,7 @@ u'metric_four', u'metric_one', u'metric_six', u'metric_three', u'metric_two']
 #-----------------------------------------------------------------------------#
 
 
-def energy_histogram(energy_bound, tally_result, savepath, plot_title='default title',
+def energy_histogram(energy_bound, tally_result, savepath, plot_title='',
         x_title='Energy Bins (MeV)', y_title='Tally Result',
         color='#412966', lowest_bin=1e-10):
     if len(energy_bound) == len(tally_result):
@@ -43,7 +43,8 @@ def energy_histogram(energy_bound, tally_result, savepath, plot_title='default t
     # sns.set(rc={'text.usetex' : True})
     plt.hist(pseudodata, bins=energy_bins, weights=tally_result,
             histtype='step', fill=False, linewidth=1, color=color)
-    plt.title('%s' %plot_title)
+    if plot_title:
+        plt.title('%s' %plot_title)
     plt.xlabel('%s' %x_title)
     plt.ylabel('%s' %y_title)
     plt.xscale('log')
