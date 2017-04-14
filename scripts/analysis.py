@@ -12,6 +12,7 @@ from __future__ import (division, absolute_import, print_function, )
 
 import numpy as np
 import h5py
+import pandas as pd
 from mcnpoutput import TrackLengthTally
 from plotting_utils import ( names, energy_histogram )
 from matplotlib import pyplot as plt
@@ -325,18 +326,34 @@ class AnisotropyAnalysis(object):
 class FOMAnalysis(object):
     ''' This class has the options to calculate simple FoM data for a single
     run.  '''
-    def __init__(self, MC_output_file, tallynumber, deterministic_timing_file,
-            datasavepath=''):
+    def __init__(self, MC_output_file, tallynumber,
+            deterministic_timing_file='', datasavepath=''):
+
+        # set the user-specified variables for accessibility later
         self.mc_output_file = MC_output_file
         self.tallynumber = tallynumber
         self.det_timing_file = deterministic_timing_file
 
-        self.det_timingdata = TimingOutput(self.det_timing_file).get_timing_data()
+        # read in the relevant data for analysis into objects
+        # first, monte carlo data:
         self.mc_data = MCNPOutput(self.mc_output_file,
                         tallynumber=self.tallynumber).get_tally_data()
 
-        self.all_foms = {}
+        # then, if a deterministic timing file has been specified, read that
+        # data to an object as well.
 
+        if deterministic_timing_file:
+            self.det_timingdata = TimingOutput(self.det_timing_file).get_timing_data()
+        else:
+            self.det_timingdata = None
+
+        # reserve some variables for accessibility later
+        self.all_foms = {}
+        self.fom_frame = None
+        self.tally_frame = None
+
+        # specify a folder where the plots and files associated with this
+        # method will be saved
         if datasavepath:
             self.savepath = datasavepath
         else:
@@ -348,9 +365,24 @@ class FOMAnalysis(object):
         pass
 
     def print_tally_convergence(self, printtype='tex'):
-        self.gettallyframe(self.mc_data['fom_trends'], index='nps')
 
-        pass
+        # first get the pandas dataframe from get_tallyframe
+        if self.tally_frame:
+            frame = self.tally_frame
+        else:
+            frame = self.get_tallyframe(self.mc_data['fom_trends'], index='nps')
+
+        # now format the frame based on the printtype
+        if printtype == 'tex' or 'latex':
+            frame = frame.to_latex()
+        elif printtype == 'string' or 'str':
+            frame = frame.to_string()
+        else:
+            print('%s is not a recognized printing type for this table'
+                    %(printtype))
+        print frame
+
+        return frame
 
     def get_tallyframe(datadict, index=''):
         if index:
@@ -359,29 +391,40 @@ class FOMAnalysis(object):
         else:
             tallyframe = pd.DataFrame(datadict)
 
+        self.tally_frame = tallyframe
         return tallyframe
 
 
-    def plot_fom_convergence(self):
+    def plot_fom_convergence(self, plot_name='fom_converge'):
         xdata = self.mc_data['fom_trends']['nps']
         ydata = self.mc_data['fom_trends']['fom']
         x_label = 'Number of Source Particles'
         y_label = 'Figure of Merit'
         plt_title = 'Figure of Merit Convergence'
-        plt_name = 'fom_converge'
+        plt_name = plot_name
         self.generic_scatterplot(xdata, ydata, self.savepath, title=plt_title,
                 xlabel=x_label, ylabel=y_label, plot_name=plt_name)
         pass
 
-    def generate_fom_table(self):
-
+    def generate_fom_frame(self):
         # check to see if foms have been generated
         if not self.all_foms:
             all_foms = self.calculate_all_foms()
         else:
             all_foms = self.all_foms
 
-        pass
+        data = {'MC': [all_foms['fom_mc']['FOM'], all_foms['fom_max']['FOM'],
+            all_foms['fom_min']['FOM'], all_foms['fom_mc']['time'] ],
+                'MC_adjusted': [[all_foms['fom_mc_det']['FOM'],
+                    all_foms['fom_max_det']['FOM'],
+                    all_foms['fom_min_det']['FOM'],
+                    all_foms['fom_mc_det']['time']]}
+        labels = ['tally avg', 'max RE', 'min RE', 'time (mins)']
+        frame = pd.DataFrame(data, index=labels)
+
+        self.fom_frame = frame
+
+        return frame
 
     def generic_scatterplot(self, xdata, ydata, savepath, title='title',
             xlabel='xlabel', ylabel='ylabel', plot_name='generic'):

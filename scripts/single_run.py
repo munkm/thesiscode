@@ -133,7 +133,7 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            x_title='Metric Type',
                            x_names=groupdata['names'],
                            y_title='Relative Metric Distribution',
-                           savepath=analysis_dir+'/%s_strip.png' %group,
+                           savepath=analysis_dir+'/%s_violin.png' %group,
                            log_scale=True)
         pass
 
@@ -148,7 +148,7 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            x_title='Metric Type',
                            x_names=groupdata['names'],
                            y_title='Box of Metric Distribution',
-                           savepath=analysis_dir+'/%s_strip.png' %group,
+                           savepath=analysis_dir+'/%s_boxes.png' %group,
                            log_scale=True)
         pass
 
@@ -160,25 +160,38 @@ def do_single_analysis(base_directory_path, method_type='cadis',
     MCNP_data = FOM_init.mc_data
 
     if input_flags['fom_convergence'] == True:
-        logger.info("plotting fom convergence for tally %s" %(tallynumber))
-        FOM_init.plot_fom_convergence()
+        logger.info("plotting fom convergence for tally %s" %(tally_number))
+        imagename = 'fom_converge'
+        FOM_init.plot_fom_convergence(imagename)
         pass
 
     if input_flags['relative_error_by_bin'] == True:
-        logger.info("plotting tally %s relative error at %s" %())
-        bins = MCNP_data['tally_data']
+        loc = analysis_dir+'/tally_%s_error.png' %(tally_number)
+        logger.info("plotting tally %s relative error at %s" %(tally_number,
+            loc))
+        bins = MCNP_data['tally_data']['energy_groups']
+        relative_err = MCNP_data['tally_data']['relative_error']
+        energy_histogram(bins, relative_err, loc,
+                y_title='tally_relative_error')
         pass
 
     if input_flags['tally_result'] == True:
-        logger.info("plotting tally result at %s ")
+        loc = analysis_dir+'/tally_%s_result.png' %(tally_number)
+        logger.info("plotting tally %s result at %s" %(tally_number, loc))
+        bins = MCNP_data['tally_data']['energy_groups']
+        tally_result = MCNP_data['tally_data']['tallied_result']
+        energy_histogram(bins, tally_result, loc)
         pass
 
     if input_flags['save_fom_data'] == True:
-        logger.info("saving figure of merit data to %s" %filelocation)
+        logger.info("saving figure of merit data to %s" %(loc))
         FOM_init.generate_fom_table()
         pass
 
-    anisotropy_stats = anisotropy_file.get_data_statistics()
+    if input_flags['save_tally_data'] == True:
+        logger.info("saving tally %s convergence data to %s" %(tally_number,loc))
+
+    anisotropy_data = anisotropy_file.get_data_statistics()
 
     if input_flags['plot_anisotropy_correlations'] == True:
         logger.info("plotting anisotropy correlations ")
@@ -197,7 +210,26 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                     scale=scale)
         pass
 
-    pass
+    if input_flags['save_all_data_json']==True:
+        logger.info("saving processed data to %s" %(datasave))
+        all_data = {'anisotropy data' : anisotropy_data,
+                    'filenames' : filenames,
+                    'directories' : directories,
+                    'all foms' : all_foms,
+                    'mcnp data' : MCNP_data,
+                    'input flags' input_flags,
+                    'datanames' : datanames,
+                    }
+        datasave = analysis_dir+'/processed_data.json'
+
+        # dump the processed data to .json file later for accessibility
+        with open(datasave, 'w') as fp:
+            json.dump(datasave, fp, indent=4)
+        pass
+
+    return
+
+
 
 ###############################################################################
 # end of thesiscode/scripts/single-run.py
