@@ -14,6 +14,7 @@ from plotting_utils import ( violinbyenergy, stripbyenergy, boxbyenergy,
                            boxbymetric, names, energy_histogram )
 from analysis_utils import (get_paths, verify_input_flags, make_logger,
         metric_names, xscales)
+import json
 import os
 import logging
 ###############################################################################
@@ -26,7 +27,9 @@ def do_single_analysis(base_directory_path, method_type='cadis',
         plot_strip_for_energy=False, plot_violins_for_energy=False,
         plot_FoM_convergence=False,
         plot_RE_by_bin=False, plot_tally_results=False,
-        save_FoM_data=False, plot_anisotropy_with_tallydata=False,
+        save_FoM_data=False, save_tally_data=False,
+        plot_anisotropy_with_tallydata=False,
+        save_data_json=False,
         logfile_name='analysis.log'):
     ''' This is the driver script to generate analysis data for a single run.
     The user can choose whether to overwrite previous data, which metrics to
@@ -52,6 +55,8 @@ def do_single_analysis(base_directory_path, method_type='cadis',
             'relative_error_by_bin': plot_RE_by_bin,
             'tally_result' : plot_tally_results,
             'save_fom_data' : save_FoM_data,
+            'save_tally_data' : save_tally_data,
+            'save_all_data_json' : save_data_json,
             'plot_anisotropy_correlations' : plot_anisotropy_with_tallydata,
             'base_directory' : directories['top_directory'],
             'analysis_data_directory' : directories['analysis_directory']
@@ -77,7 +82,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            y_title='Relative Metric Distribution',
                            savepath=analysis_dir+'/%s_violin.png' %metric,
                            log_scale=True)
-        pass
 
     if input_flags['boxes_for_metric'] == True:
         logger.info("plotting boxes for all energies, by metric")
@@ -91,7 +95,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            y_title='Relative Metric Distribution',
                            savepath=analysis_dir+'/%s_box.png' %metric,
                            log_scale=True)
-        pass
 
     if input_flags['strip_for_metric'] == True:
         logger.info("plotting strips for all energies, by metric")
@@ -105,7 +108,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            y_title='Relative Metric Distribution',
                            savepath=analysis_dir+'/%s_strip.png' %metric,
                            log_scale=True)
-        pass
 
     if input_flags['strip_for_energy'] == True:
         logger.info("plotting stripplots for all metrics, monoenergies")
@@ -120,7 +122,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            y_title='Relative Metric Distribution Density',
                            savepath=analysis_dir+'/%s_strip.png' %group,
                            log_scale=True)
-        pass
 
     if input_flags['violins_for_energy'] == True:
         logger.info("plotting violinplots for all metrics, monoenergies")
@@ -135,7 +136,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            y_title='Relative Metric Distribution',
                            savepath=analysis_dir+'/%s_violin.png' %group,
                            log_scale=True)
-        pass
 
     if input_flags['boxes_for_energy'] == True:
         logger.info("plotting boxplots for each energy group")
@@ -150,7 +150,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                            y_title='Box of Metric Distribution',
                            savepath=analysis_dir+'/%s_boxes.png' %group,
                            log_scale=True)
-        pass
 
     FOM_init = FOMAnalysis(filenames['mcnp_output_file'], tally_number,
             filenames['timing_file'])
@@ -163,7 +162,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
         logger.info("plotting fom convergence for tally %s" %(tally_number))
         imagename = 'fom_converge'
         FOM_init.plot_fom_convergence(imagename)
-        pass
 
     if input_flags['relative_error_by_bin'] == True:
         loc = analysis_dir+'/tally_%s_error.png' %(tally_number)
@@ -173,7 +171,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
         relative_err = MCNP_data['tally_data']['relative_error']
         energy_histogram(bins, relative_err, loc,
                 y_title='tally_relative_error')
-        pass
 
     if input_flags['tally_result'] == True:
         loc = analysis_dir+'/tally_%s_result.png' %(tally_number)
@@ -181,15 +178,21 @@ def do_single_analysis(base_directory_path, method_type='cadis',
         bins = MCNP_data['tally_data']['energy_groups']
         tally_result = MCNP_data['tally_data']['tallied_result']
         energy_histogram(bins, tally_result, loc)
-        pass
 
     if input_flags['save_fom_data'] == True:
+        loc = analysis_dir+'/tally_%s_foms.txt' %(tally_number)
         logger.info("saving figure of merit data to %s" %(loc))
-        FOM_init.generate_fom_table()
-        pass
+        foms = FOM_init.print_tally_foms(printtype='str', float_format='%.2f')
+        with open(loc, 'w') as fp:
+            fp.write(foms)
+            fp.close()
 
     if input_flags['save_tally_data'] == True:
+        loc = analysis_dir+'/tally_%s_converg.txt' %(tally_number)
         logger.info("saving tally %s convergence data to %s" %(tally_number,loc))
+        conv = FOM_init.print_tally_convergence(printtype='str')
+        with open(loc, 'w') as fp:
+            fp.write(conv)
 
     anisotropy_data = anisotropy_file.get_data_statistics()
 
@@ -208,7 +211,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
             x4 = metric_data[:,3]
             statscatter(x1,x2,x4, err, savepath='' %(metric), metric_name=name,
                     scale=scale)
-        pass
 
     if input_flags['save_all_data_json']==True:
         logger.info("saving processed data to %s" %(datasave))
@@ -217,7 +219,7 @@ def do_single_analysis(base_directory_path, method_type='cadis',
                     'directories' : directories,
                     'all foms' : all_foms,
                     'mcnp data' : MCNP_data,
-                    'input flags' input_flags,
+                    'input flags': input_flags,
                     'datanames' : datanames,
                     }
         datasave = analysis_dir+'/processed_data.json'
@@ -225,7 +227,6 @@ def do_single_analysis(base_directory_path, method_type='cadis',
         # dump the processed data to .json file later for accessibility
         with open(datasave, 'w') as fp:
             json.dump(datasave, fp, indent=4)
-        pass
 
     return
 

@@ -364,30 +364,50 @@ class FOMAnalysis(object):
             self.savepath = path2
         pass
 
-    def print_tally_convergence(self, printtype='tex'):
-
+    def print_tally_convergence(self, printtype='', **kwargs):
         # first get the pandas dataframe from get_tallyframe
-        if self.tally_frame:
+        if self.tally_frame is not None:
             frame = self.tally_frame
         else:
             frame = self.get_tallyframe(self.mc_data['fom_trends'], index='nps')
 
-        # now format the frame based on the printtype
-        if printtype == 'tex' or 'latex':
-            frame = frame.to_latex()
-        elif printtype == 'string' or 'str':
-            frame = frame.to_string()
-        else:
-            print('%s is not a recognized printing type for this table'
-                    %(printtype))
-        print frame
+        frame = self.format_dataframe(frame, printtype=printtype, **kwargs)
 
         return frame
 
-    def get_tallyframe(datadict, index=''):
+    def print_tally_foms(self, printtype='', **kwargs):
+        # first get the pandas dataframe from generate_fom_frame
+        if self.fom_frame is not None:
+            frame = self.fom_frame
+        else:
+            frame = self.generate_fom_frame()
+
+        # pd.options.display.float_format = '{:.2f}'.format
+        frame = self.format_dataframe(frame, printtype=printtype, **kwargs)
+
+        return frame
+
+    def format_dataframe(self, dataframe, printtype='', **kwargs):
+        if printtype == '':
+            print('No formatting type specified.')
+            frame = dataframe
+        elif printtype == 'string' or printtype == 'str':
+            print('ah. you got string %s' %printtype)
+            frame = dataframe.to_string(**kwargs)
+        elif printtype == 'tex' or printtype == 'latex':
+            frame = dataframe.to_latex(**kwargs)
+            print('ah. you got latex %s' %printtype)
+        else:
+            print('%s is not a recognized printing type for this table'
+                    %(printtype))
+            frame = dataframe
+        return frame
+
+    def get_tallyframe(self, datadict, index=''):
         if index:
             ind_digits = [int(num) for num in datadict[index]]
             tallyframe = pd.DataFrame(datadict, index=ind_digits)
+            tallyframe = tallyframe.drop(index, 1)
         else:
             tallyframe = pd.DataFrame(datadict)
 
@@ -414,11 +434,15 @@ class FOMAnalysis(object):
             all_foms = self.all_foms
 
         data = {'MC': [all_foms['fom_mc']['FOM'], all_foms['fom_max']['FOM'],
-            all_foms['fom_min']['FOM'], all_foms['fom_mc']['time'] ],
-                'MC_adjusted': [[all_foms['fom_mc_det']['FOM'],
+            all_foms['fom_min']['FOM'], all_foms['fom_mc']['time'] ] }
+
+        if self.det_timingdata is not None:
+            data.update({ 'MC_adjusted':
+                    [all_foms['fom_mc_det']['FOM'],
                     all_foms['fom_max_det']['FOM'],
                     all_foms['fom_min_det']['FOM'],
-                    all_foms['fom_mc_det']['time']]}
+                    all_foms['fom_mc_det']['time']]})
+
         labels = ['tally avg', 'max RE', 'min RE', 'time (mins)']
         frame = pd.DataFrame(data, index=labels)
 
@@ -448,24 +472,9 @@ class FOMAnalysis(object):
         std_fom_pcount = self.mc_data['fom_trends']['nps'][-1]
 
         std_fom_time = self.mc_data['timing']['mcrun_time']['time']
-        det_time = self.det_timingdata['adjusted_deterministic_time']
-
-        # make sure units match between files
-
-        det_units = self.det_timingdata['units']
         mc_units = self.mc_data['timing']['mcrun_time']['units']
-        if det_units == 'seconds' and mc_units == 'minutes':
-            det_time = det_time/60.0
-        else:
-            print('The units for these timing files are different from expected'
-                  ' vals. det units are %s and mc units are %s' %(det_units, mc_units)
-                    )
-
-        total_time = std_fom_time + det_time
 
         time_data = {'mc_time': std_fom_time,
-                     'det_time' : det_time,
-                     'total_time' : total_time,
                      'units': mc_units}
 
         total_err = self.mc_data['tally_data']['tally_total_relative_error']
@@ -475,20 +484,48 @@ class FOMAnalysis(object):
         dat1 = self.make_fom_dict(std_fom_err, std_fom_time)
         dat2 = self.make_fom_dict(max_err, std_fom_time)
         dat3 = self.make_fom_dict(min_err, std_fom_time)
-        dat4 = self.make_fom_dict(total_err, total_time)
-        dat5 = self.make_fom_dict(max_err, total_time)
-        dat6 = self.make_fom_dict(min_err, total_time)
 
         fom_results = {
                    'fom_mc': dat1,
                    'fom_max': dat2,
                    'fom_min': dat3,
-                   'fom_mc_det':dat4,
-                   'fom_max_det':dat5,
-                   'fom_min_det':dat6,
                    'particle_count': std_fom_pcount,
                    'times_used' : time_data,
                    }
+
+        if self.det_timingdata is not None:
+            # add all deterministic stuff to dict if timingdata has been
+            # generated for this problem
+
+            det_time = self.det_timingdata['adjusted_deterministic_time']
+
+            # make sure units match between files
+
+            det_units = self.det_timingdata['units']
+            if det_units == 'seconds' and mc_units == 'minutes':
+                det_time = det_time/60.0
+            else:
+                print('The units for these timing files are different from'
+                      'expected vals. det units are %s and mc units are %s'
+                      %(det_units, mc_units))
+
+            total_time = std_fom_time + det_time
+
+            time_data.update({
+                     'det_time' : det_time,
+                     'total_time' : total_time,
+                })
+
+            dat4 = self.make_fom_dict(total_err, total_time)
+            dat5 = self.make_fom_dict(max_err, total_time)
+            dat6 = self.make_fom_dict(min_err, total_time)
+
+            fom_results.update({
+                   'fom_mc_det': dat4,
+                   'fom_max_det': dat5,
+                   'fom_min_det': dat6,
+                   'times_used' : time_data,
+                })
 
         self.all_foms = fom_results
 
