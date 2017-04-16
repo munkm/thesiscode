@@ -13,6 +13,8 @@ profile page](munkm.github.io).
 Features to add in `scripts`:
 * reading function in run function to check for existence of pickle and .json
   file that holds previously processed data. 
+* method that checks method_type and sends a warning if user-define and found
+  method are different. 
 * compare runs function to compare mcnp data between angle-methods, standard
   methods, and naive monte carlo runs. 
 * make single_run a function in a class that holds the single_run data (for
