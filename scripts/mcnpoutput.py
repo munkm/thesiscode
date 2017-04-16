@@ -29,7 +29,6 @@ class TrackLengthTally(object):
         self.tallynumber = tallynumber
         return
 
-
     def get_timing_data(self):
         # This function parses out the relevant timing data for the problem. It
         # will populate a dictionary with the total Monte Carlo runtime and the
