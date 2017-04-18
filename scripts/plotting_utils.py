@@ -41,6 +41,7 @@ def energy_histogram(energy_bound, tally_result, savepath, plot_title='',
             {"ytick.direction": u'in',
              "xtick.direction": u'in'})
     # sns.set(rc={'text.usetex' : True})
+    fig = plt.figure()
     plt.hist(pseudodata, bins=energy_bins, weights=tally_result,
             histtype='step', fill=False, linewidth=1, color=color)
     if plot_title:
@@ -49,6 +50,7 @@ def energy_histogram(energy_bound, tally_result, savepath, plot_title='',
     plt.ylabel('%s' %y_title)
     plt.xscale('log')
     plt.savefig('%s' %(savepath), hbox_inches='tight')
+    plt.close(fig)
 
 def boxbyenergy(data, plot_title, x_title, y_title, savepath, log_scale=False):
     plot_title = str(plot_title)
@@ -56,7 +58,7 @@ def boxbyenergy(data, plot_title, x_title, y_title, savepath, log_scale=False):
     y_title = str(y_title)
 
     sns.set_style("whitegrid")
-    plt.figure(figsize=(12,5))
+    fig = plt.figure(figsize=(15,5))
     pal = sns.diverging_palette(10, 240, n=27)
     sns.boxplot(data=data, palette=pal, linewidth=1.25)
     plt.title(plot_title)
@@ -65,6 +67,7 @@ def boxbyenergy(data, plot_title, x_title, y_title, savepath, log_scale=False):
     if log_scale==True:
         plt.yscale('log')
     plt.savefig('%s' %(savepath), hbox_inches='tight')
+    plt.close(fig)
 
 def violinbyenergy(data, plot_title, x_title, y_title, savepath,
         log_scale=False):
@@ -73,7 +76,7 @@ def violinbyenergy(data, plot_title, x_title, y_title, savepath,
     y_title = str(y_title)
 
     sns.set_style("whitegrid")
-    plt.figure(figsize=(15,5))
+    fig = plt.figure(figsize=(15,5))
     pal = sns.diverging_palette(10, 240, n=27)
     sns.violinplot(data=data, palette=pal, bw=.2, cut=0, linewidth=1, log_bins=True)
     plt.title(plot_title)
@@ -82,6 +85,7 @@ def violinbyenergy(data, plot_title, x_title, y_title, savepath,
     if log_scale == True:
         plt.yscale('log')
     plt.savefig('%s' %(savepath), hbox_inches='tight')
+    plt.close(fig)
 
 def stripbyenergy(data, plot_title, x_title, y_title, savepath, log_scale=False):
     plot_title = str(plot_title)
@@ -89,7 +93,7 @@ def stripbyenergy(data, plot_title, x_title, y_title, savepath, log_scale=False)
     y_title = str(y_title)
 
     sns.set_style("whitegrid")
-    plt.figure(figsize=(15,5))
+    fig = plt.figure(figsize=(15,5))
     pal = sns.diverging_palette(10, 240, n=27)
     sns.stripplot(data=data, palette=pal, jitter=True, size=1)
     plt.title(plot_title)
@@ -98,15 +102,16 @@ def stripbyenergy(data, plot_title, x_title, y_title, savepath, log_scale=False)
     if log_scale == True:
         plt.yscale('log')
     plt.savefig('%s' %(savepath), hbox_inches='tight')
+    plt.close(fig)
 
 def violinbymetric(data, plot_title, x_title, x_names, y_title, savepath,
         log_scale=False):
     sns.set_style("whitegrid")
-    plt.figure(figsize=(10,5))
+    fig = plt.figure(figsize=(10,5))
     if log_scale == True:
         plt.yscale('log')
     pal=sns.color_palette("YlOrRd", 16)
-    sns.violinplot(data=data[:,1:], palette=pal[8:], linewidth=1, cut=0,
+    sns.violinplot(data=data, palette=pal[8:], linewidth=1, cut=0,
                    scale='width', gridsize=100, inner='box', log_bins=True,
                    bw=.2)
     plt.title(plot_title)
@@ -115,11 +120,12 @@ def violinbymetric(data, plot_title, x_title, x_names, y_title, savepath,
     plt.xticks(np.arange(len(names)),names, rotation=45)
     plt.gcf().subplots_adjust(bottom=0.20)
     plt.savefig('%s' %(savepath), hbox_inches='tight')
+    plt.close(fig)
 
 def stripbymetric(data, plot_title, x_title, x_names, y_title, savepath,
         log_scale=False):
     sns.set_style("whitegrid")
-    plt.figure(figsize=(10,5))
+    fig = plt.figure(figsize=(10,5))
     pal=sns.color_palette("YlOrRd", 16)
     if log_scale == True:
         plt.yscale('log')
@@ -130,11 +136,12 @@ def stripbymetric(data, plot_title, x_title, x_names, y_title, savepath,
     plt.xticks(np.arange(len(names)), names, rotation=45)
     plt.gcf().subplots_adjust(bottom=0.20)
     plt.savefig('%s' %(savepath), hbox_inches='tight')
+    plt.close(fig)
 
 def boxbymetric(data, plot_title, x_title, x_names, y_title, savepath,
         log_scale=False):
     sns.set_style("whitegrid")
-    plt.figure(figsize=(10,5))
+    fig = plt.figure(figsize=(10,5))
     pal=sns.color_palette("YlOrRd", 16)
     if log_scale == True:
         plt.yscale('log')
@@ -145,9 +152,10 @@ def boxbymetric(data, plot_title, x_title, x_names, y_title, savepath,
     plt.xticks(np.arange(len(names)), names, rotation=45)
     plt.gcf().subplots_adjust(bottom=0.20)
     plt.savefig('%s' %(savepath), hbox_inches='tight')
+    plt.close(fig)
 
 def statscatter(x1, x2, x4, y, savepath, metric_name='default metric name',
-                y_name='Tally Relative Error', pal='purples', scale='linear'):
+                y_name='Tally Relative Error', pal='groups', scale='linear'):
     '''This plot is not going to be particularly flexible. It will
     return a line of several plots that show the correlation between a single y
     dataset and the mean (x1), median (x2), mean/median (x1/x2), and the
@@ -168,19 +176,19 @@ def statscatter(x1, x2, x4, y, savepath, metric_name='default metric name',
     ax1 = fig.add_subplot(gs[:,0:21])
     ax1.scatter(x1,y, color=pal[0])
     ax1.set_ylabel(y_name)
-    ax1.set_xlabel("Mean Value")
+    ax1.set_xlabel("Metric Mean Value")
     ax1.set_xscale(scale)
 
     ax2 = fig.add_subplot(gs[:,25:46])
     ax2.scatter(x2,y, color=pal[1])
     ax2.get_yaxis().set_ticklabels([])
-    ax2.set_xlabel("Median Value")
+    ax2.set_xlabel("Metric Median Value")
     ax2.set_xscale(scale)
 
     ax3 = fig.add_subplot(gs[:,50:71])
     ax3.scatter(x1/x2,y, color=pal[2])
     ax3.get_yaxis().set_ticklabels([])
-    ax3.set_xlabel("Mean/Median")
+    ax3.set_xlabel("Metric Mean/Median")
     ax3.set_xscale(scale)
 
     ax4 = fig.add_subplot(gs[:,75:96])
@@ -205,6 +213,7 @@ def statscatter(x1, x2, x4, y, savepath, metric_name='default metric name',
         ax3.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
         ax4.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     plt.savefig('%s' %(savepath),bbox_inches='tight')
+    plt.close(fig)
 
 #-----------------------------------------------------------------------------#
 if __name__ == '__main__':
