@@ -101,86 +101,91 @@ class Single_Run(object):
         datanames = anisotropy_file.get_datanames()
         self.datanames=datanames
 
-        if input_flags['violins_for_metric'] == True:
-            logger.info("plotting violins for all energies, by  metric")
+        if input_flags['strip_for_metric'] == True or \
+        input_flags['violins_for_metric'] == True or \
+        input_flags['boxes_for_metric'] == True:
+            logger.info("Starting plotting routines for single metric, all"
+                    + " energy groups")
+
             metrics = datanames['metric_names']
             for metric in metrics:
                 groupdata =  anisotropy_file.get_data_by_metric(metric)
+                subdata = anisotropy_file.get_dataset_by_metric(metric,
+                        num_samples = 1500)
                 name = metric_names[metric]
-                violinbyenergy(data=groupdata['data'],
-                               plot_title='%s Distribution, by Energy group' %(name),
-                               x_title='Energy Group No.',
-                               y_title='Relative Metric Distribution',
-                               savepath=analysis_dir+'/%s_violin.png' %metric,
-                               log_scale=True)
 
-        if input_flags['boxes_for_metric'] == True:
-            logger.info("plotting boxes for all energies, by metric")
-            metrics = datanames['metric_names']
-            for metric in metrics:
-                groupdata =  anisotropy_file.get_data_by_metric(metric)
-                name = metric_names[metric]
-                boxbyenergy(data=groupdata['data'],
-                               plot_title='%s Distribution, by Energy group' %(name),
-                               x_title='Energy Group No.',
-                               y_title='Relative Metric Distribution',
-                               savepath=analysis_dir+'/%s_box.png' %metric,
-                               log_scale=True)
+                if input_flags['violins_for_metric'] == True:
+                    logger.info("plotting violins for all energies, %s" %(name))
+                    violinbyenergy(data=groupdata['data'],
+                                   plot_title='%s Distribution, by Energy group' %(name),
+                                   x_title='Energy Group No.',
+                                   y_title='Relative Metric Distribution',
+                                   savepath=analysis_dir+'/%s_violin.png' %metric,
+                                   log_scale=True)
 
-        if input_flags['strip_for_metric'] == True:
-            logger.info("plotting strips for all energies, by metric")
-            metrics = datanames['metric_names']
-            for metric in metrics:
-                groupdata =  anisotropy_file.get_dataset_by_metric(metric)
-                name = metric_names[metric]
-                stripbyenergy(data=groupdata['data'],
-                               plot_title='%s Distribution, by Energy group' %(name),
-                               x_title='Energy Group No.',
-                               y_title='Relative Metric Distribution',
-                               savepath=analysis_dir+'/%s_strip.png' %metric,
-                               log_scale=True)
+                if input_flags['boxes_for_metric'] == True:
+                    logger.info("plotting boxes for all energies, %s" %(name))
+                    boxbyenergy(data=groupdata['data'],
+                                   plot_title='%s Distribution, by Energy group' %(name),
+                                   x_title='Energy Group No.',
+                                   y_title='Relative Metric Distribution',
+                                   savepath=analysis_dir+'/%s_box.png' %metric,
+                                   log_scale=True)
 
-        if input_flags['strip_for_energy'] == True:
-            logger.info("plotting stripplots for all metrics, monoenergies")
+                if input_flags['strip_for_metric'] == True:
+                    logger.info("plotting strips for all energies, %s" %(name))
+                    stripbyenergy(data=subdata['data'],
+                                   plot_title='%s Distribution, by Energy group' %(name),
+                                   x_title='Energy Group No.',
+                                   y_title='Relative Metric Distribution',
+                                   savepath=analysis_dir+'/%s_strip.png' %metric,
+                                   log_scale=True)
+
+
+        if input_flags['strip_for_energy'] == True or \
+        input_flags['violins_for_energy'] == True or \
+        input_flags['boxes_for_energy'] == True:
+            logger.info("Starting plotting routines for monoenergic plots, all"
+                    + " metric types")
             groups = datanames['energy_groups']
             for group in groups:
-                groupdata =  anisotropy_file.get_dataset_by_energy(group)
-                name = group_names[group]
-                stripbymetric(data=groupdata['data'],
-                               plot_title='%s Distribution, by Metric' %(name),
-                               x_title='Metric Type',
-                               x_names=groupdata['names'],
-                               y_title='Relative Metric Distribution Density',
-                               savepath=analysis_dir+'/%s_strip.png' %group,
-                               log_scale=True)
+                groupdata =  anisotropy_file.get_data_by_energy(group)
+                subdata = anisotropy_file.get_dataset_by_energy(group,
+                        num_samples = 1500)
+                # name = group_names[group]
+                name = group
 
-        if input_flags['violins_for_energy'] == True:
-            logger.info("plotting violinplots for all metrics, monoenergies")
-            groups = datanames['energy_groups']
-            for group in groups:
-                groupdata =  anisotropy_file.get_dataset_by_energy(group)
-                name = group_names[group]
-                violinbymetric(data=groupdata['data'],
-                               plot_title='%s Distribution, by Metric' %(name),
-                               x_title='Metric Type',
-                               x_names=groupdata['names'],
-                               y_title='Relative Metric Distribution',
-                               savepath=analysis_dir+'/%s_violin.png' %group,
-                               log_scale=True)
+                if input_flags['strip_for_energy'] == True:
+                    logger.info("plotting stripplots for all metrics, %s"
+                            %(name))
+                    stripbymetric(data=subdata['data'],
+                                   plot_title='%s Distribution, by Metric' %(name),
+                                   x_title='Metric Type',
+                                   x_names=groupdata['names'],
+                                   y_title='Relative Metric Distribution Density',
+                                   savepath=analysis_dir+'/%s_strip.png' %group,
+                                   log_scale=True)
 
-        if input_flags['boxes_for_energy'] == True:
-            logger.info("plotting boxplots for each energy group")
-            groups = datanames['energy_groups']
-            for group in groups:
-                groupdata =  anisotropy_file.get_dataset_by_energy(group)
-                name = group_names[group]
-                boxesbymetric(data=groupdata['data'],
-                               plot_title='%s Distribution, by Metric' %(name),
-                               x_title='Metric Type',
-                               x_names=groupdata['names'],
-                               y_title='Box of Metric Distribution',
-                               savepath=analysis_dir+'/%s_boxes.png' %group,
-                               log_scale=True)
+                if input_flags['violins_for_energy'] == True:
+                    logger.info("plotting violinplots for all metrics, %s"
+                            %(group))
+                    violinbymetric(data=groupdata['data'],
+                                   plot_title='%s Distribution, by Metric' %(name),
+                                   x_title='Metric Type',
+                                   x_names=groupdata['names'],
+                                   y_title='Relative Metric Distribution',
+                                   savepath=analysis_dir+'/%s_violin.png' %group,
+                                   log_scale=True)
+
+                if input_flags['boxes_for_energy'] == True:
+                    logger.info("plotting boxplots for all metrics, %s" %(name))
+                    boxbymetric(data=groupdata['data'],
+                                   plot_title='%s Distribution, by Metric' %(name),
+                                   x_title='Metric Type',
+                                   x_names=groupdata['names'],
+                                   y_title='Box of Metric Distribution',
+                                   savepath=analysis_dir+'/%s_boxes.png' %group,
+                                   log_scale=True)
 
         FOM_init = FOMAnalysis(filenames['mcnp_output_file'], tally_number,
                 filenames['timing_file'])
