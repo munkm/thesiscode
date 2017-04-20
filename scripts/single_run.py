@@ -30,7 +30,9 @@ class Single_Run(object):
             method_name='unknown method'
 
         # initialize logger
-        dirpath = os.path.abspath(base_directory_path)
+        base_directory_path = os.path.expanduser(base_directory_path)
+        dirpath = base_directory_path
+        # dirpath = os.path.abspath(base_directory_path)
         logfile = '%s/%s' %(dirpath,logfile_name)
         logger = make_logger("analysis", logfile)
         logger.info("initialized %s analysis %s " %(method_type,__name__))
@@ -45,7 +47,7 @@ class Single_Run(object):
 
         # set dataobjects
         self.foms = None
-        self.mcnp_data = None
+        self.MCNP_data = None
         self.anisotropy_data = None
 
         pass
@@ -69,7 +71,7 @@ class Single_Run(object):
         logger.info("acquiring files and directories in directory %s"
                 %(self.base_directory_path))
         filenames, directories = get_paths(self.base_directory_path,
-                                           analysis_dirname=analysis_directory_name)
+                                analysis_dirname=analysis_directory_name)
 
         self.filenames = filenames
         self.directories = directories
@@ -95,11 +97,17 @@ class Single_Run(object):
         input_flags = verify_input_flags(input_flags, filenames, directories)
         self.input_flags = input_flags
 
-        anisotropy_file = H5Output(filenames['anisotropy_file'])
-        analysis_dir = directories['analysis_directory']
+        if input_flags['strip_for_metric'] == True or \
+        input_flags['violins_for_metric'] == True or \
+        input_flags['boxes_for_metric'] == True or \
+        input_flags['strip_for_energy'] == True or \
+        input_flags['violins_for_energy'] == True or \
+        input_flags['boxes_for_energy'] == True:
+            anisotropy_file = H5Output(filenames['anisotropy_file'])
+            datanames = anisotropy_file.get_datanames()
+            self.datanames=datanames
 
-        datanames = anisotropy_file.get_datanames()
-        self.datanames=datanames
+        analysis_dir = directories['analysis_directory']
 
         if input_flags['strip_for_metric'] == True or \
         input_flags['violins_for_metric'] == True or \
@@ -195,6 +203,8 @@ class Single_Run(object):
 
         self.foms = all_foms
         self.MCNP_data = MCNP_data
+        self.frames = {'fom_frame': FOM_init.fom_frame,
+                       'tally_frame': FOM_init.tally_frame}
 
         if input_flags['fom_convergence'] == True:
             logger.info("plotting fom convergence for tally %s" %(tally_number))
