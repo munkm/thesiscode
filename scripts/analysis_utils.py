@@ -104,6 +104,9 @@ def get_paths(path, analysis_dirname='analysis'):
         logger.info("The directory entered is a denovo solution directory." \
                 " Moving up one directory")
         base_dir_path = '%s/../' %(base_dir_path)
+    elif os.path.isfile('%s/mcnp/out' %base_dir_path):
+        logger.info("Base directory for MCNP-only solution found at %s"
+                %(base_dir_path))
     else:
         logger.error(" Looked for base directory in %s but the advantg " \
                 " file was not found and the weight window file "\

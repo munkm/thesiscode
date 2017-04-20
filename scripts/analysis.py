@@ -349,8 +349,10 @@ class FOMAnalysis(object):
 
         # reserve some variables for accessibility later
         self.all_foms = {}
-        self.fom_frame = None
-        self.tally_frame = None
+        self.fom_frame = self.generate_fom_frame()
+        self.tally_frame = self.get_tallyframe(self.mc_data['fom_trends'],
+                          index='nps')
+
 
         # specify a folder where the plots and files associated with this
         # method will be saved
