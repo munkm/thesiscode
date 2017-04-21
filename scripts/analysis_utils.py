@@ -230,6 +230,20 @@ def get_paths(path, analysis_dirname='analysis'):
 
     return(filenames, directories)
 
+def get_method_type(filenames, directories):
+    if directories['omega_directory'] is not None and \
+       directories['adjoint_directory'] is not None:
+           method_type = 'cadisangle'
+    elif directories['adjoint_directory'] is not None and \
+       directories['forward_directory'] is None:
+           method_type = 'cadis'
+    elif directories['mcnp_directory'] is not None and \
+       directories['adjoint_directory'] is None:
+           method_type = 'analog'
+
+    return method_type
+
+
 
 #-----------------------------------------------------------------------------#
 

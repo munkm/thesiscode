@@ -13,7 +13,7 @@ from plotting_utils import ( violinbyenergy, stripbyenergy, boxbyenergy,
                            stripbymetric, violinbymetric,
                            boxbymetric, names, energy_histogram )
 from analysis_utils import (get_paths, verify_input_flags, make_logger,
-        metric_names, xscales)
+        metric_names, xscales, get_method_type)
 import json
 import pickle
 import os
@@ -75,6 +75,22 @@ class Single_Run(object):
 
         self.filenames = filenames
         self.directories = directories
+
+        method_type = get_method_type(filenames, directories)
+
+        if self.method_type:
+            if self.method_type != method_type:
+                logger.warning("User-defined method type and detected method" \
+                        + "type do not match. \n User defined: %s"%self.method_type\
+                        + "\n Detected: %s" %method_type \
+                        + "\n Using user-specified method.")
+            elif self.method_type == method_type:
+                logger.info("User-defined method type and detected type match" \
+                        + " as: %s" %self.method_type)
+        else:
+            logger.info("No method type specified by user. \n Using detected" \
+                    + " type: %s" %method_type)
+            self.method_type = method_type
 
         input_flags={'violins_for_metric': plot_violins_for_metric,
                 'violins_for_energy': plot_violins_for_energy,
