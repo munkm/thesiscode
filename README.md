@@ -15,12 +15,12 @@ Features to add in `scripts`:
   file that holds previously processed data. 
 * method that checks method_type and sends a warning if user-define and found
   method are different. 
-* compare runs function to compare mcnp data between angle-methods, standard
-  methods, and naive monte carlo runs. 
-* make single_run a function in a class that holds the single_run data (for
-  easy access in a compare_run method. 
-* pass kwargs objects into plotting functions for standardized formatting in
-  angle methods, standard methods, and naive monte carlo. 
+* ~~compare runs function to compare mcnp data between angle-methods, standard
+  methods, and naive monte carlo runs.~~ 
+* ~~make single_run a function in a class that holds the single_run data (for
+  easy access in a compare_run method.~~ 
+* ~~pass kwargs objects into plotting functions for standardized formatting in
+  angle methods, standard methods, and naive monte carlo.~~ 
 * fill out logging messages in `analysis.py`, `analysis_utils.py`, and
   `plotting_utils.py`
-* add a formatting dict for all methods that is callable from plotting_utils. 
+* ~~add a formatting dict for all methods that is callable from plotting_utils.~~ 
