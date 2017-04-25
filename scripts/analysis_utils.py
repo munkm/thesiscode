@@ -11,7 +11,7 @@ import os
 import logging
 ###############################################################################
 
-def make_logger(name,logfile):
+def format_logger(name,logfile):
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
@@ -26,13 +26,14 @@ def make_logger(name,logfile):
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+
     return logger
 
 def verify_input_flags(input_flags, filenames, directories):
     ''' This function will print the value for each of the input flags to a
     log file in the base analysis directory.'''
 
-    logger = logging.getLogger("analysis.input-flags")
+    logger = logging.getLogger("analysis.utils.input-flags")
 
     dependencies={'violins_for_metric': ['anisotropy_file'],
             'violins_for_energy': ['anisotropy_file'],
@@ -88,7 +89,7 @@ def check_analysis(path, inputs):
 
 
 def get_paths(path, analysis_dirname='analysis'):
-    logger = logging.getLogger("analysis.get_paths")
+    logger = logging.getLogger("analysis.utils.get_paths")
     logger.info("successfully passed logger to get_paths")
 
     base_dir_path = str(path)
@@ -231,6 +232,8 @@ def get_paths(path, analysis_dirname='analysis'):
     return(filenames, directories)
 
 def get_method_type(filenames, directories):
+    logger = logging.getLogger("analysis.utils.methoddetector")
+
     if directories['omega_directory'] is not None and \
        directories['adjoint_directory'] is not None:
            method_type = 'cadisangle'
@@ -240,6 +243,8 @@ def get_method_type(filenames, directories):
     elif directories['mcnp_directory'] is not None and \
        directories['adjoint_directory'] is None:
            method_type = 'analog'
+
+    logger.info(''' Detected method type is : %s ''' %method_type)
 
     return method_type
 

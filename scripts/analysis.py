@@ -17,6 +17,7 @@ from mcnpoutput import TrackLengthTally
 from plotting_utils import ( names, energy_histogram )
 from matplotlib import pyplot as plt
 import seaborn as sns
+import logging
 import json
 
 ###############################################################################
@@ -48,6 +49,9 @@ class TimingOutput(object):
         pass
 
     def get_timing_data(self, extraopts=['strings']):
+        # open the logger
+        logger = logging.getLogger("analysis.fomanalysis.timing_data")
+
         timingfile = open(self.timingfile)
         tf = json.loads(timingfile.read())
 
@@ -64,10 +68,10 @@ class TimingOutput(object):
         newtime = full_det_time
         for option in ignore_keys:
             if option not in timing_keys:
-                print('%s not in timing output. ' %option
+                logger.debug('%s not in timing output. ' %option
                       +  ' Not including it in calculation')
             else:
-                print('%s found in timing output. ' %option
+                logger.debug('%s found in timing output. ' %option
                       +  ' Subtracting value from total deterministic'
                       +  ' runtime')
 
@@ -182,6 +186,9 @@ class H5Output(object):
         dimensions of (no. metrics, x, y, z), else it will be (no. metrics,
         x*y*z) '''
 
+        # open the logger
+        logger = logging.getLogger("analysis.H5Output.databyenergy")
+
         # open the file as readonly
         f=h5py.File('%s' %(self.outputlocation), 'r')
 
@@ -195,8 +202,9 @@ class H5Output(object):
         elif type(group_number) == unicode or str:
             group_number = group_number
         else:
-            print('group number is not a recognized type')
+            logger.error('group number is not a recognized type')
 
+        logger.debug('using data for %s' %group_number)
         # loop through the data in the hdf5 file and load it in
         for metric in f:
             subdata = f[metric][group_number][:].flatten()
@@ -222,6 +230,9 @@ class H5Output(object):
         and a matrix of data corresponding to a sample of anisotropy data (n
         samples) for a specified metric name.  '''
 
+        # open the logger
+        logger = logging.getLogger("analysis.H5Output.subdatabyenergy")
+
         full_dataset = self.get_data_by_energy(group_number,
                 flatten_data=flatten_data)
         full_data = full_dataset['data']
@@ -231,7 +242,10 @@ class H5Output(object):
         elif type(group_number) == unicode or str:
             group_number = group_number
         else:
-            print('group number is not a recognized type')
+            logger.error('group number is not a recognized type')
+
+        logger.info('getting dataset of %s particles for %s' %(num_samples,
+            group_number))
 
         size = np.shape(full_data)
         num_metrics = size[-1]
@@ -384,25 +398,28 @@ class FOMAnalysis(object):
         else:
             frame = self.generate_fom_frame()
 
-        # pd.options.display.float_format = '{:.2f}'.format
         frame = self.format_dataframe(frame, printtype=printtype, **kwargs)
 
         return frame
 
     def format_dataframe(self, dataframe, printtype='', **kwargs):
+        # open the logger
+        logger = logging.getLogger("analysis.fomanalysis.format_dataframe")
+
         if printtype == '':
-            print('No formatting type specified.')
+            logger.info('No formatting type specified. Returning user input')
             frame = dataframe
         elif printtype == 'string' or printtype == 'str':
-            print('ah. you got string %s' %printtype)
+            logger.info('formatting the dataframe to %s' %printtype)
             frame = dataframe.to_string(**kwargs)
         elif printtype == 'tex' or printtype == 'latex':
             frame = dataframe.to_latex(**kwargs)
-            print('ah. you got latex %s' %printtype)
+            logger.info('formatting the dataframe to %s' %printtype)
         else:
-            print('%s is not a recognized printing type for this table'
+            logger.warning('%s is not a recognized printing type for this table'
                     %(printtype))
             frame = dataframe
+
         return frame
 
     def get_tallyframe(self, datadict, index=''):
@@ -467,7 +484,10 @@ class FOMAnalysis(object):
         plt.savefig('%s/%s.png' %(savepath,plot_name), hbox_inches='tight')
 
     def calculate_all_foms(self):
+        # open the logger
+        logger = logging.getLogger('analysis.fomanalysis.calculatefoms')
 
+        logger.info("calculating foms for mcnp run")
         std_fom = self.mc_data['fom_trends']['fom'][-1]
         std_fom_mean = self.mc_data['fom_trends']['mean'][-1]
         std_fom_err = self.mc_data['fom_trends']['error'][-1]
@@ -496,6 +516,8 @@ class FOMAnalysis(object):
                    }
 
         if self.det_timingdata is not None:
+            logger.info("""calculating modified foms which incorporate
+                   deterministic runtime""")
             # add all deterministic stuff to dict if timingdata has been
             # generated for this problem
 
@@ -507,7 +529,7 @@ class FOMAnalysis(object):
             if det_units == 'seconds' and mc_units == 'minutes':
                 det_time = det_time/60.0
             else:
-                print('The units for these timing files are different from'
+                logger.info('The units for these timing files are different from'
                       'expected vals. det units are %s and mc units are %s'
                       %(det_units, mc_units))
 

@@ -13,6 +13,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
 from matplotlib import gridspec
+import logging
 ###############################################################################
 
 # Default Values for various things
@@ -23,15 +24,17 @@ u'metric_four', u'metric_one', u'metric_six', u'metric_three', u'metric_two']
 
 #-----------------------------------------------------------------------------#
 
-
 def energy_histogram(energy_bound, tally_result, savepath,
         plot_title='',
         x_title='Energy Bins (MeV)', y_title='Tally Result',
         lowest_bin=1e-10, **kwargs):
+
+    logger = logging.getLogger('analysis.plotting_utils.energy_hist')
+
     if len(energy_bound) == len(tally_result):
-        print("energy groups not binned. using %s as lowest bound" %lowest_bin)
+        logger.warning("energy groups not binned. using %s as lowest bound" %lowest_bin)
         if energy_bound[0] < lowest_bin:
-            print("""lowest bin is larger than first energy bound. Enter a
+            logger.warning("""lowest bin is larger than first energy bound. Enter a
                     different value""")
             return
         energy_bins = np.append([lowest_bin],energy_bound)
