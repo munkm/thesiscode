@@ -12,6 +12,18 @@ profile page](munkm.github.io).
 Features to add in `scripts`:
 * reading function in run function to check for existence of pickle and .json
   file that holds previously processed data. 
+* Modify logging messages to proper level. 
+* Comment in more of code.
+* Add docstrings for all functions and classes
+* Modify `MCNPOutput` class in `analysis.py` to take the tally number in
+  `get_tally_data` so multiple tallies can be read in under the same MCNPOutput
+  object.
+* Modify H5Output functions to be more flexible. Merge get_dataset_by_metric
+  and get_dataset_by_energy into a single function that can read either or. 
+* Build in handler in compare_runs so cadis and cadisangle-only can be
+  compared. 
+
+Recently added features:
 * ~~method that checks method_type and sends a warning if user-define and found
   method are different.~~ 
 * ~~compare runs function to compare mcnp data between angle-methods, standard
@@ -23,5 +35,4 @@ Features to add in `scripts`:
 * ~~fill out logging messages in `analysis.py`, `analysis_utils.py`, and
   `plotting_utils.py`~~
 * ~~add a formatting dict for all methods that is callable from plotting_utils.~~ 
-* Modify logging messages to proper level. 
-* Comment in more of code. 
+
