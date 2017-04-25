@@ -23,13 +23,26 @@ import json
 ###############################################################################
 
 class MCNPOutput(object):
+    '''
+    MCNPOutput is a simple wrapping class to pull in tally data for an
+    f4 tally binned by energy. Given a mcnp output file location and the tally
+    number (defaulted to 44), this class will return that tally data
+    '''
     def __init__(self, outputlocation, tallynumber='44'):
+        '''
+        Returns output location, tally number, and title of solution as
+        class objects
+        '''
         self.outputlocation = str(outputlocation)
         self.title = self.outputlocation
         self.tallynumber = tallynumber
         pass
 
     def get_tally_data(self):
+        '''
+        Returns dict of tally data. Dict includes timing data returned from
+        convergence information, and tally results.
+        '''
         output_init = TrackLengthTally(self.outputlocation, self.tallynumber)
         output_fom = output_init.get_fom_data()
         output_tally = output_init.get_tally_result()
@@ -44,11 +57,32 @@ class MCNPOutput(object):
 #-----------------------------------------------------------------------------#
 
 class TimingOutput(object):
+    '''
+    This class reads in the timing dict from the timing.json file ouputted from
+    a modified ADVANTG run.
+    '''
     def __init__(self, timingfilelocation):
+        '''
+        Adds timingfile location to class as object.
+        '''
         self.timingfile = str(timingfilelocation)
         pass
 
     def get_timing_data(self, extraopts=['strings']):
+        '''
+        Returns a dict of timing information. Dict includes full deterministic
+        runtime, modified deterministic runtime (the full time less extraopts
+        and a few extra parameters), the keys used to calculate each time, and
+        the units of the dict.
+
+        get_timing_data() will return a modified deterministic runtime with the
+        default timings modified (mix_mats, map_cells, and anisotropy
+        quantification)
+
+        get_timing_data(extraopts=['Writing omega solution to disk']) will
+        return a modified runtime with the default timings subtrated and also
+        everything contained in extraopts.
+        '''
         # open the logger
         logger = logging.getLogger("analysis.fomanalysis.timing_data")
 
@@ -92,16 +126,30 @@ class TimingOutput(object):
 #-----------------------------------------------------------------------------#
 
 class H5Output(object):
+    '''
+    HDF5 reader class, custom for anisotropy output file specifically. In an
+    ADVANTG run, this file should be located at
+    ${solution_dir}/omega_solution/problem_anisotropies.h5
+    '''
     def __init__(self, outputlocation):
         self.outputlocation = str(outputlocation)
         pass
 
+    # this function still in progress. Not fully functional.
     def get_all_data(self):
+        '''
+        Returns all data from an hdf5 file. Users should be cautious because
+        all of this data will be read into memory at one time.
+        '''
         f=h5py.File('%s' %(self.outputlocation), 'r')
 
         return all_data
 
     def get_datanames(self):
+        '''
+        Returns dict of metric_names and energy_groups contained in the
+        anisotropy file. These can be used for labeling of data.
+        '''
         f = h5py.File('%s' %(self.outputlocation),'r')
         metric_names = f.keys()
         energy_groups = f[metric_names[0]].keys()
@@ -113,9 +161,11 @@ class H5Output(object):
 
     def get_dataset_by_metric(self, metric_name, num_samples = 1500,
                              flatten_data=True):
-        ''' This function returns a dict with the names of eeach energy group
-        and a matrix of data corresponding to a sample of anisotropy data (n
-        samples) for a specified metric name.  '''
+        '''
+        Returns a dict with the names of each energy group
+        and a matrix of data corresponding to a sample of anisotropy data
+        (num_samples) for a specified metric name.
+        '''
 
         full_dataset = self.get_data_by_metric(metric_name,
                 flatten_data=flatten_data)
@@ -142,13 +192,15 @@ class H5Output(object):
 
 
     def get_data_by_metric(self, metric_name, flatten_data=True):
-        '''This function returns a dict with the names of each group and a
+        '''
+        Returns a dict with the names of each group and a
         matrix of data corresponding to the anisotropy data (groupwise) for a
         specifed metric name If flatten_data is set to False, then the data
         matrix returned in the dict will have dimensions of (groups, x, y, z),
         else it will be (groups, x*y*z). Because this function is used
         primarily for plotting, the dimensionality of the flattened array is
-        desired. '''
+        desired.
+        '''
 
         # open the file as readonly
         f=h5py.File('%s' %(self.outputlocation), 'r')
@@ -197,6 +249,8 @@ class H5Output(object):
         data = np.zeros([matrix_size])
         names = []
 
+        # check to see how user specified group number. Make it usable by
+        # function.
         if type(group_number) == int:
             group_number = 'group_%03d' %group_number
         elif type(group_number) == unicode or str:
@@ -226,9 +280,11 @@ class H5Output(object):
 
     def get_dataset_by_energy(self, group_number, num_samples = 1500,
                              flatten_data=True):
-        ''' This function returns a dict with the names of eeach energy group
+        '''
+        Returns a dict with the names of eeach energy group
         and a matrix of data corresponding to a sample of anisotropy data (n
-        samples) for a specified metric name.  '''
+        samples) for a specified metric name.
+        '''
 
         # open the logger
         logger = logging.getLogger("analysis.H5Output.subdatabyenergy")
@@ -267,11 +323,18 @@ class H5Output(object):
         return groupdata
 
     def get_data_statistics(self):
-        '''This function gets the average value and standard deviation for each
-        metric by energy group and returns two matrices: one with dims
-        (metric*no.groups) corresponding to the averages, and the other for the
-        standard deviations. Two lists will also be outputted corresponding to
-        the metric names and the group numbers'''
+        '''
+        Calculates the average value, median value, metric variance,
+        and standard deviation for each
+        metric by energy group and returns a dict with that data:
+        - the metrics for which the statistics were calculated
+        - the group numbers over which the metrics were calculated
+        - the statistics calculated ('data')
+        - labels for the statistics ('statistics')
+        The actual data returned in the dict will have dimensions of:
+        (metric*no.groups*statistics) corresponding to the averages, and the other for the
+        standard deviations.
+        '''
 
         # open the file as readonly
         f=h5py.File('%s' %(self.outputlocation), 'r')
@@ -338,10 +401,21 @@ class AnisotropyAnalysis(object):
 #-----------------------------------------------------------------------------#
 
 class FOMAnalysis(object):
-    ''' This class has the options to calculate simple FoM data for a single
-    run.  '''
+    '''
+    This class has the options to calculate simple FoM data for a single
+    run. If only a MC_output_file is specified, then foms will be calculated
+    for the tally average relative error, the tally maximum relative error, and
+    the tally minumum_relative error given a speficied tally number. If a
+    deterministic timing file is included, then modified FOMS including the
+    deterministic runtime will also be calculated.
+    '''
     def __init__(self, MC_output_file, tallynumber,
             deterministic_timing_file='', datasavepath=''):
+        '''
+        Sets up variables in the class that are usable by all class functions
+        '''
+
+        import os
 
         # set the user-specified variables for accessibility later
         self.mc_output_file = MC_output_file
@@ -372,15 +446,26 @@ class FOMAnalysis(object):
         # method will be saved
         if datasavepath:
             self.savepath = datasavepath
-        else:
-            import os
+        elif self.det_timingdata is not None:
+            # if no path is specified, then assume it should be saved in an
+            # analysis folder alongside the MC_output_file.
             path1 = os.path.dirname(MC_output_file)
             path2 = os.path.join(path1, '../analysis/')
             path2 = os.path.normpath(path2)
             self.savepath = path2
+        else:
+            # if there is no deterministic timing data, then put the saved data
+            # in the mcnp folder.
+            self.savepath = os.path.dirname(MC_output_file)
         pass
 
     def print_tally_convergence(self, printtype='', **kwargs):
+        '''
+        Returns the tally convergence data in a pandas dataframe, or a
+        formatted dataframe if printtype is specified. Printtypes available are
+        str and tex. Other pandas formatting options can be passed with
+        **kwargs.
+        '''
         # first get the pandas dataframe from get_tallyframe
         if self.tally_frame is not None:
             frame = self.tally_frame
@@ -392,6 +477,12 @@ class FOMAnalysis(object):
         return frame
 
     def print_tally_foms(self, printtype='', **kwargs):
+        '''
+        Returns the tally figure of merits in a pandas dataframe, or a
+        formatted dataframe if printtype is specified. Printtypes available are
+        str and tex. Other pandas formatting options can be passed with
+        **kwargs.
+        '''
         # first get the pandas dataframe from generate_fom_frame
         if self.fom_frame is not None:
             frame = self.fom_frame
@@ -403,6 +494,14 @@ class FOMAnalysis(object):
         return frame
 
     def format_dataframe(self, dataframe, printtype='', **kwargs):
+        '''
+        Given a dataframe, this function will return it given the formatting
+        option specified in printtype. If printtype is not specified, this
+        funciton will return the same dataframe. Further formatting options can
+        be specified through **kwargs. printtype options can be string or
+        latex.
+        '''
+
         # open the logger
         logger = logging.getLogger("analysis.fomanalysis.format_dataframe")
 
@@ -423,6 +522,12 @@ class FOMAnalysis(object):
         return frame
 
     def get_tallyframe(self, datadict, index=''):
+        '''
+        Given a dictionary containing strings or arrays fo data, get_tallyframe
+        will return a pandas dataframe. If index is specified, the key:value
+        pair of the dictionary that corresponds with that index will be used
+        for the dataframe indexing.
+        '''
         if index:
             ind_digits = [int(num) for num in datadict[index]]
             tallyframe = pd.DataFrame(datadict, index=ind_digits)
@@ -435,6 +540,10 @@ class FOMAnalysis(object):
 
 
     def plot_fom_convergence(self, plot_name='fom_converge'):
+        '''
+        Convenience plotting function for plotting the FOM convergence as a
+        function of particle count.
+        '''
         xdata = self.mc_data['fom_trends']['nps']
         ydata = self.mc_data['fom_trends']['fom']
         x_label = 'Number of Source Particles'
@@ -446,15 +555,26 @@ class FOMAnalysis(object):
         pass
 
     def generate_fom_frame(self):
+        '''
+        Returns a datframe of all FOMS for a tally. If only an MCNP input exists,
+        then the tally average, tally maximum relative error and tally minumum
+        relative error FOMs will be calculated with the mcrun time. If a
+        deterministic timing data file is present, adjusted FOMS will also be
+        in the returned dataframe.
+        '''
+
         # check to see if foms have been generated
         if not self.all_foms:
             all_foms = self.calculate_all_foms()
         else:
             all_foms = self.all_foms
 
+        # Put the MCNP FOMs into the data dict.
         data = {'MC': [all_foms['fom_mc']['FOM'], all_foms['fom_max']['FOM'],
             all_foms['fom_min']['FOM'], all_foms['fom_mc']['time'] ] }
 
+        # If the deterministic timing file is present, then calculate the
+        # modified FOMS and add them to the data dict too
         if self.det_timingdata is not None:
             data.update({ 'MC_adjusted':
                     [all_foms['fom_mc_det']['FOM'],
@@ -462,15 +582,22 @@ class FOMAnalysis(object):
                     all_foms['fom_min_det']['FOM'],
                     all_foms['fom_mc_det']['time']]})
 
+        # add labels for the index
         labels = ['tally avg', 'max RE', 'min RE', 'time (mins)']
+
+        # put the data into a datframe.
         frame = pd.DataFrame(data, index=labels)
 
+        # add the frame to the data object.
         self.fom_frame = frame
 
         return frame
 
     def generic_scatterplot(self, xdata, ydata, savepath, title='title',
             xlabel='xlabel', ylabel='ylabel', plot_name='generic'):
+        '''
+        Convenience function for making a scatterplot.
+        '''
         sns.set_style('ticks',
                       {'ytick.direction': u'in',
                        'xtick.direction': u'in'})
@@ -484,29 +611,53 @@ class FOMAnalysis(object):
         plt.savefig('%s/%s.png' %(savepath,plot_name), hbox_inches='tight')
 
     def calculate_all_foms(self):
+        '''
+        Function to calculate the FOMS for the problem. Returns dict with
+        either 3  or 6 entries. If only MCNP output is found, then dict will
+        contain Monte Carlo-exclusive FOMS. If MCNP output and deterministic
+        output are found, then dict will also include adjusted FOMS.
+        '''
+
         # open the logger
         logger = logging.getLogger('analysis.fomanalysis.calculatefoms')
 
+        # pull out fom, mean, and error from tally convergence data.
         logger.info("calculating foms for mcnp run")
         std_fom = self.mc_data['fom_trends']['fom'][-1]
         std_fom_mean = self.mc_data['fom_trends']['mean'][-1]
         std_fom_err = self.mc_data['fom_trends']['error'][-1]
         std_fom_pcount = self.mc_data['fom_trends']['nps'][-1]
 
+        # pull in the monte carlo data from MCrun.
         std_fom_time = self.mc_data['timing']['mcrun_time']['time']
         mc_units = self.mc_data['timing']['mcrun_time']['units']
 
+        # put timing data into dict.
         time_data = {'mc_time': std_fom_time,
                      'units': mc_units}
 
+        # from the tally data, get the tally total relative error, max relative
+        # error and the min relative error.
         total_err = self.mc_data['tally_data']['tally_total_relative_error']
         max_err = self.mc_data['tally_data']['relative_error'].max()
         min_err = self.mc_data['tally_data']['relative_error'].min()
 
+        if total_err == std_fom_err:
+            logger.debug('''Tally convergence relative error and tally results
+                    total relative error match''')
+        else:
+            logger.warning('''Tally convergence relative error and tally
+            results total relative error do not match. \n
+            Tally convergence RE: %s \n
+            Tally results total RE: %s \n ''' %(std_fom_err,total_err))
+
+        # calculate the foms and put them into dictionaries
         dat1 = self.make_fom_dict(std_fom_err, std_fom_time)
         dat2 = self.make_fom_dict(max_err, std_fom_time)
         dat3 = self.make_fom_dict(min_err, std_fom_time)
 
+        # put MC FOMS into solution dictionary. Include particle count and time
+        # data.
         fom_results = {
                    'fom_mc': dat1,
                    'fom_max': dat2,
@@ -515,6 +666,7 @@ class FOMAnalysis(object):
                    'times_used' : time_data,
                    }
 
+        # check to see if deterministic timing data exists.
         if self.det_timingdata is not None:
             logger.info("""calculating modified foms which incorporate
                    deterministic runtime""")
@@ -523,8 +675,7 @@ class FOMAnalysis(object):
 
             det_time = self.det_timingdata['adjusted_deterministic_time']
 
-            # make sure units match between files
-
+            # make sure units of time match between files
             det_units = self.det_timingdata['units']
             if det_units == 'seconds' and mc_units == 'minutes':
                 det_time = det_time/60.0
@@ -540,10 +691,13 @@ class FOMAnalysis(object):
                      'total_time' : total_time,
                 })
 
+            # calculate the deterministic adjusted FOMs. Add them to
+            # dictionaries.
             dat4 = self.make_fom_dict(total_err, total_time)
             dat5 = self.make_fom_dict(max_err, total_time)
             dat6 = self.make_fom_dict(min_err, total_time)
 
+            # update the solution dict to include new FOMS
             fom_results.update({
                    'fom_mc_det': dat4,
                    'fom_max_det': dat5,
@@ -556,7 +710,12 @@ class FOMAnalysis(object):
         return fom_results
 
     def make_fom_dict(self,err,time):
+        '''
+        Convenience function for calculating the figure of merit and
+        putting fom data into a dictionary.
+        '''
 
+        # calculate the FOM
         figure_of_merit = np.divide(1,(err**2)*time)
 
         return {

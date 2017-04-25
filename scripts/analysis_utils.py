@@ -12,16 +12,22 @@ import logging
 ###############################################################################
 
 def format_logger(name,logfile):
-
+    '''
+    Logging formatting function. When called it will specify the string output
+    format of the logger and it will also specify the filepath for the log
+    savefile.
+    '''
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter('%(levelname)s -- %(name)s : %(message)s')
 
+    # specify the to-screen printing for the logger.
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
+    # specify the to-file printing for the logger.
     fh = logging.FileHandler(filename=logfile)
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
@@ -89,6 +95,12 @@ def check_analysis(path, inputs):
 
 
 def get_paths(path, analysis_dirname='analysis'):
+    '''
+    Given a path for a solution directory, this function will populate two
+    different dicts (filenames and directories) with pertinent information used
+    in data processing later on.
+    '''
+
     logger = logging.getLogger("analysis.utils.get_paths")
     logger.info("successfully passed logger to get_paths")
 
@@ -232,6 +244,16 @@ def get_paths(path, analysis_dirname='analysis'):
     return(filenames, directories)
 
 def get_method_type(filenames, directories):
+    '''
+    Takes filenames and directories dictionaries. Based on directories, it will
+    attempt to surmise the method type of the run. If there is an omega
+    solution directory, for example, it knows that the method is an angle
+    method. If there is no adjoint solution directory, it will assume the run
+    was an mcnp run.
+
+    Returns string of method type.
+    '''
+
     logger = logging.getLogger("analysis.utils.methoddetector")
 
     if directories['omega_directory'] is not None and \

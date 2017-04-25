@@ -23,16 +23,21 @@ import re
 
 class TrackLengthTally(object):
     def __init__(self, outputpath, tallynumber='44'):
-        # Initialize the TrackLengthTally object, requires the tally number and
-        # the location of the output file
+        '''
+        Initialize the TrackLengthTally object, requires the tally number and
+        the location of the output file
+        '''
+
         self.outputpath = str(outputpath)
         self.tallynumber = tallynumber
         return
 
     def get_timing_data(self):
-        # This function parses out the relevant timing data for the problem. It
-        # will populate a dictionary with the total Monte Carlo runtime and the
-        # Monte Carlo transport runtimes, as well as their units.
+        '''
+        This function parses out the relevant timing data for the problem. It
+        will populate a dictionary with the total Monte Carlo runtime and the
+        Monte Carlo transport runtimes, as well as their units.
+        '''
 
     	time = r".*"+re.escape("computer time =")+r".*\n"
     	pattern = re.compile(time)
@@ -61,10 +66,10 @@ class TrackLengthTally(object):
     	return times
 
     def get_tally_result(self):
-        # Function used to get the tally result from the mcnp output. This
-        # function will return a dictionary of numpy arrays with the tally
-        # energy bins, the tally numerical results, and the tally relative
-        # errors.
+        '''Function used to get the tally result from the mcnp output. This
+        function will return a dictionary of numpy arrays with the tally
+        energy bins, the tally numerical results, and the tally relative
+        errors.'''
 
         # read in the file
         f = open(self.outputpath, 'r')
@@ -110,11 +115,13 @@ class TrackLengthTally(object):
 
 
     def get_fom_data(self):
-        # Function that scrapes specified tally statistical results, including
-        # the tally variance, the tally slope, the tally total relative error,
-        # the tally Figure of Merit (FoM), and the particle count associated
-        # with each. The funciton will return a dictionary with key value pairs
-        # with labels and corresponding numpy arrays.
+        '''
+        Function that scrapes specified tally statistical results, including
+        the tally variance, the tally slope, the tally total relative error,
+        the tally Figure of Merit (FoM), and the particle count associated
+        with each. The funciton will return a dictionary with key value pairs
+        with labels and corresponding numpy arrays.
+        '''
 
         # read in the file
         f = open(self.outputpath, 'r')

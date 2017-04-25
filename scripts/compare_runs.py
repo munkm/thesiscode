@@ -55,6 +55,11 @@ class Compare_Runs(object):
         pass
 
     def get_data(self, folderpath, method_type=''):
+        '''
+        convenience function to obtain single_run data for a given method
+        folderpath and method_type. Returns single_run object for that
+        analysis.
+        '''
 
         if folderpath:
             data = Single_Run(folderpath, method_type=method_type)
@@ -65,12 +70,18 @@ class Compare_Runs(object):
         return data
 
     def plot_tally_result(self, savepath=None):
+        '''
+        Plots a histogram of the tally result for all methods.
+        '''
         self.plot_compare(compare_type='tallied_result',
                 y_label='Tally Result', title='%s comparison of tally result'
                 %self.problem_name, savepath=savepath)
         return
 
     def plot_tally_error(self, savepath=None):
+        '''
+        Plots a histogram of the tally relative error for each method.
+        '''
         self.plot_compare(compare_type='relative_error',
                 y_label='Tally Relative Error',
                 title='%s comparison of tally relative error'
@@ -79,14 +90,35 @@ class Compare_Runs(object):
 
     def plot_compare(self, compare_type='tallied_result',
                      savepath=None, y_label='', title=''):
+        '''
+        Plotting function to plot multiple energy histograms on a single
+        figure.
+        '''
+
+        # gets the tally data for each method.
         energy_groups = \
             self.cadisangledata.MCNP_data['tally_data']['energy_groups']
         cadang = self.cadisangledata.MCNP_data['tally_data'][compare_type]
-        cad = self.cadisdata.MCNP_data['tally_data'][compare_type]*1.05
-        analog = self.analogdata.MCNP_data['tally_data'][compare_type]*1.10
+        cad = self.cadisdata.MCNP_data['tally_data'][compare_type]
+        analog = self.analogdata.MCNP_data['tally_data'][compare_type]
 
+        # check to see if results are identical. Modify them with a warning log
+        # message if they do.
+        if cad == cadang:
+            logger.warning("""The results for cadis and cadisangle seem to be
+                    identical. Plotting cadis at 1.05 higher than actual
+                    results.""")
+            cad = cad*1.05
+        if analog == cadang:
+            logger.warning(""" The results for analog and cadisangle seem to be
+                    identical. Plotting analog at 1.10 higher than actual
+                    results.""")
+            analog = analog*1.10
+
+        # open figure object
         fig = plt.figure()
 
+        # plot a histogram on the figure for each method type.
         energy_histogram(energy_groups, cadang, None,
                 **styles[self.cadisangledata.method_type])
         energy_histogram(energy_groups, cad, None,
@@ -94,7 +126,6 @@ class Compare_Runs(object):
         energy_histogram(energy_groups, analog, None,
                 **styles[self.analogdata.method_type])
 
-        # plt.legend(loc=best)
         plt.legend()
 
         if title:
@@ -115,6 +146,10 @@ class Compare_Runs(object):
         return
 
     def make_table(self, framename):
+        '''
+        Merges pandas dataframes from results into a super-dataframe with
+        results from all methods. Returns dataframe.
+        '''
         logger = logging.getLogger("analysis.compare")
         logger.debug('composite frame of %s being created' %framename)
 
@@ -135,6 +170,9 @@ class Compare_Runs(object):
 
     def do_compare_analysis(self, plot_tally_results=False, plot_tally_error=False,
             make_fomtable=False, make_tallytable=False):
+        '''
+        Driver function for the compare solutions.
+        '''
 
         logger = logging.getLogger("analysis.compare")
 
