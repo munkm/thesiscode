@@ -12,7 +12,7 @@ from analysis import MCNPOutput, FOMAnalysis, H5Output
 from plotting_utils import ( violinbyenergy, stripbyenergy, boxbyenergy,
                            stripbymetric, violinbymetric,
                            boxbymetric, names, energy_histogram )
-from analysis_utils import (get_paths, verify_input_flags, make_logger,
+from analysis_utils import (get_paths, verify_input_flags, format_logger,
         metric_names, xscales, get_method_type)
 import json
 import pickle
@@ -21,6 +21,7 @@ import logging
 ###############################################################################
 
 class Single_Run(object):
+
     def __init__(self, base_directory_path, method_type='',
         logfile_name='analysis.log'):
 
@@ -32,9 +33,16 @@ class Single_Run(object):
         # initialize logger
         base_directory_path = os.path.expanduser(base_directory_path)
         dirpath = base_directory_path
+
         # dirpath = os.path.abspath(base_directory_path)
-        logfile = '%s/%s' %(dirpath,logfile_name)
-        logger = make_logger("analysis", logfile)
+        logger = logging.getLogger("analysis")
+
+        if logger.handlers:
+            logger = logger
+        else:
+            logfile = '%s/%s' %(dirpath,logfile_name)
+            logger = format_logger("analysis", logfile)
+
         logger.info("initialized %s analysis %s " %(method_type,__name__))
 
         # set variables for later
@@ -67,7 +75,7 @@ class Single_Run(object):
         plot, and where to save that data. By default it will be saved in an
         /analysis/ folder inside the run directory for the hybrid run. '''
 
-        logger=logging.getLogger("analysis")
+        logger=logging.getLogger("analysis.single_run")
         logger.info("acquiring files and directories in directory %s"
                 %(self.base_directory_path))
         filenames, directories = get_paths(self.base_directory_path,
@@ -118,7 +126,8 @@ class Single_Run(object):
         input_flags['boxes_for_metric'] == True or \
         input_flags['strip_for_energy'] == True or \
         input_flags['violins_for_energy'] == True or \
-        input_flags['boxes_for_energy'] == True:
+        input_flags['boxes_for_energy'] == True or \
+        input_flags['plot_anisotropy_correlations'] == True:
             anisotropy_file = H5Output(filenames['anisotropy_file'])
             datanames = anisotropy_file.get_datanames()
             self.datanames=datanames

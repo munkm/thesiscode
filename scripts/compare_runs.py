@@ -10,9 +10,10 @@ from __future__ import (division, absolute_import, print_function, )
 import numpy as np
 
 from single_run import Single_Run
-from analysis_utils import make_logger
+from analysis_utils import format_logger
 from plotting_utils import energy_histogram, styles
 import logging
+import os
 from matplotlib import pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -22,6 +23,30 @@ import pandas as pd
 class Compare_Runs(object):
     def __init__(self, cadisanglefolder='', cadisfolder='', analogfolder='',
             problem_name=''):
+
+        # initialize logger
+        cadisanglefolder = os.path.expanduser(cadisanglefolder)
+
+        logger = logging.getLogger("analysis")
+
+        if os.path.isdir(cadisanglefolder):
+            dirpath = cadisanglefolder+'/analysis_compare'
+            if os.path.isdir(dirpath):
+                logfile = '%s/compare_analysis.log' %dirpath
+            else:
+                os.makedirs(dirpath)
+                logfile = '%s/compare_analysis.log' %dirpath
+        else:
+            logger.error('%s is not a known directory' %cadisanglefolder)
+
+        if logger.handlers:
+            logger = logger
+        else:
+            logfile = '%s/compare_analysis.log' %dirpath
+            logger = format_logger("analysis", logfile)
+
+        logger.info("Initiated %s analysis" %__name__)
+
         self.cadisangledata = self.get_data(cadisanglefolder, 'cadisangle')
         self.cadisdata = self.get_data(cadisfolder, 'cadis')
         self.analogdata = self.get_data(analogfolder, 'analog')
@@ -90,7 +115,8 @@ class Compare_Runs(object):
         return
 
     def make_table(self, framename):
-        print('composite frame of %s being created' %framename)
+        logger = logging.getLogger("analysis.compare")
+        logger.debug('composite frame of %s being created' %framename)
 
         cad = self.cadisdata.frames[framename].transpose()
         cad_label = self.cadisdata.method_type
@@ -110,6 +136,8 @@ class Compare_Runs(object):
     def do_compare_analysis(self, plot_tally_results=False, plot_tally_error=False,
             make_fomtable=False, make_tallytable=False):
 
+        logger = logging.getLogger("analysis.compare")
+
         if plot_tally_results == True:
             if self.problem_name:
                 savepath = self.analysis_dir+'/%s_tally_result_compare.png' \
@@ -117,6 +145,7 @@ class Compare_Runs(object):
             else:
                 savepath = self.analysis_dir+'/tally_result_compare.png'
 
+            logger.info("plotting tally results at %s" %savepath)
             self.plot_tally_result(savepath=savepath)
 
         if plot_tally_error == True:
@@ -126,6 +155,7 @@ class Compare_Runs(object):
             else:
                 savepath = self.analysis_dir+'/tally_error_compare.png'
 
+            logger.info("plotting tally error at %s" %savepath)
             self.plot_tally_error(savepath=savepath)
 
         if make_fomtable == True:
@@ -137,6 +167,7 @@ class Compare_Runs(object):
             else:
                 savepath = self.analysis_dir+'/tally_foms_compare.txt'
 
+            logger.info("saving fom table to %s" %savepath)
             table = table.to_string(float_format='%.2f')
             with open(savepath, 'w') as fp:
                 fp.write(table)
@@ -149,6 +180,8 @@ class Compare_Runs(object):
                            %self.problem_name
             else:
                 savepath = self.analysis_dir+'/tally_converge_compare.txt'
+
+            logger.info("saving tally convergence table to %s" %savepath)
 
             table = table.to_string()
             with open(savepath, 'w') as fp:
