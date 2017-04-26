@@ -15,7 +15,9 @@ import h5py
 import pandas as pd
 from mcnpoutput import TrackLengthTally
 from plotting_utils import ( names, energy_histogram )
-from matplotlib import pyplot as plt
+import matplotlib as mpl
+mpl.use('pdf')
+import matplotlib.pyplot as plt
 import seaborn as sns
 import logging
 import json
@@ -608,7 +610,7 @@ class FOMAnalysis(object):
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.savefig('%s/%s.png' %(savepath,plot_name), hbox_inches='tight')
+        plt.savefig('%s/%s.pdf' %(savepath,plot_name), hbox_inches='tight')
 
     def calculate_all_foms(self):
         '''

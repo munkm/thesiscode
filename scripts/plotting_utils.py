@@ -10,7 +10,9 @@
 from __future__ import (division, absolute_import, print_function, )
 #-----------------------------------------------------------------------------#
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib as mpl
+mpl.use('pdf')
+import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib import gridspec
 import logging

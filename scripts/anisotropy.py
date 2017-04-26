@@ -8,7 +8,9 @@
 #-----------------------------------------------------------------------------#
 import numpy as np
 import h5py
-from matplotlib import pyplot as plt
+import matplotlib as mpl
+mpl.use('pdf')
+import matplotlib.pyplot as plt
 import os
 
 ###############################################################################
@@ -62,7 +64,7 @@ class AnisotropyAnalysis(object):
         plt.yscale('log')
         plt.title(r'Histogram of %s' %(name))
         plt.grid(True)
-        plt.savefig('%s/%s.png' %(savepath,plotname), hbox_inches='tight')
+        plt.savefig('%s/%s.pdf' %(savepath,plotname), hbox_inches='tight')
         plt.close()
 
 

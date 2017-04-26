@@ -153,7 +153,7 @@ class Single_Run(object):
                                    plot_title='%s Distribution, by Energy group' %(name),
                                    x_title='Energy Group No.',
                                    y_title='Relative Metric Distribution',
-                                   savepath=analysis_dir+'/%s_violin.png' %metric,
+                                   savepath=analysis_dir+'/%s_violin.pdf' %metric,
                                    log_scale=True)
 
                 if input_flags['boxes_for_metric'] == True:
@@ -162,7 +162,7 @@ class Single_Run(object):
                                    plot_title='%s Distribution, by Energy group' %(name),
                                    x_title='Energy Group No.',
                                    y_title='Relative Metric Distribution',
-                                   savepath=analysis_dir+'/%s_box.png' %metric,
+                                   savepath=analysis_dir+'/%s_box.pdf' %metric,
                                    log_scale=True)
 
                 if input_flags['strip_for_metric'] == True:
@@ -171,7 +171,7 @@ class Single_Run(object):
                                    plot_title='%s Distribution, by Energy group' %(name),
                                    x_title='Energy Group No.',
                                    y_title='Relative Metric Distribution',
-                                   savepath=analysis_dir+'/%s_strip.png' %metric,
+                                   savepath=analysis_dir+'/%s_strip.pdf' %metric,
                                    log_scale=True)
 
 
@@ -196,7 +196,7 @@ class Single_Run(object):
                                    x_title='Metric Type',
                                    x_names=groupdata['names'],
                                    y_title='Relative Metric Distribution Density',
-                                   savepath=analysis_dir+'/%s_strip.png' %group,
+                                   savepath=analysis_dir+'/%s_strip.pdf' %group,
                                    log_scale=True)
 
                 if input_flags['violins_for_energy'] == True:
@@ -207,7 +207,7 @@ class Single_Run(object):
                                    x_title='Metric Type',
                                    x_names=groupdata['names'],
                                    y_title='Relative Metric Distribution',
-                                   savepath=analysis_dir+'/%s_violin.png' %group,
+                                   savepath=analysis_dir+'/%s_violin.pdf' %group,
                                    log_scale=True)
 
                 if input_flags['boxes_for_energy'] == True:
@@ -217,7 +217,7 @@ class Single_Run(object):
                                    x_title='Metric Type',
                                    x_names=groupdata['names'],
                                    y_title='Box of Metric Distribution',
-                                   savepath=analysis_dir+'/%s_boxes.png' %group,
+                                   savepath=analysis_dir+'/%s_boxes.pdf' %group,
                                    log_scale=True)
 
         FOM_init = FOMAnalysis(filenames['mcnp_output_file'], tally_number,
@@ -237,7 +237,7 @@ class Single_Run(object):
             FOM_init.plot_fom_convergence(imagename)
 
         if input_flags['relative_error_by_bin'] == True:
-            loc = analysis_dir+'/tally_%s_error.png' %(tally_number)
+            loc = analysis_dir+'/tally_%s_error.pdf' %(tally_number)
             logger.info("plotting tally %s relative error at %s" %(tally_number,
                 loc))
             bins = MCNP_data['tally_data']['energy_groups']
@@ -246,7 +246,7 @@ class Single_Run(object):
                     y_title='tally_relative_error')
 
         if input_flags['tally_result'] == True:
-            loc = analysis_dir+'/tally_%s_result.png' %(tally_number)
+            loc = analysis_dir+'/tally_%s_result.pdf' %(tally_number)
             logger.info("plotting tally %s result at %s" %(tally_number, loc))
             bins = MCNP_data['tally_data']['energy_groups']
             tally_result = MCNP_data['tally_data']['tallied_result']
@@ -280,7 +280,7 @@ class Single_Run(object):
             err = MCNP_data['tally_data']['relative_error']
             data = anisotropy_data['data']
             for metric in anisotropy_data['metrics']:
-                loc = analysis_dir+'/%s_stats.png' %(metric)
+                loc = analysis_dir+'/%s_stats.pdf' %(metric)
                 name = metric_names[metric]
                 scale = xscales[metric]
                 metric_location = anisotropy_data['metrics'].index(metric)

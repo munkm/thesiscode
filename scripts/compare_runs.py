@@ -14,7 +14,9 @@ from analysis_utils import format_logger
 from plotting_utils import energy_histogram, styles
 import logging
 import os
-from matplotlib import pyplot as plt
+import matplotlib as mpl
+mpl.use('pdf')
+import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
@@ -178,20 +180,20 @@ class Compare_Runs(object):
 
         if plot_tally_results == True:
             if self.problem_name:
-                savepath = self.analysis_dir+'/%s_tally_result_compare.png' \
+                savepath = self.analysis_dir+'/%s_tally_result_compare.pdf' \
                            %self.problem_name
             else:
-                savepath = self.analysis_dir+'/tally_result_compare.png'
+                savepath = self.analysis_dir+'/tally_result_compare.pdf'
 
             logger.info("plotting tally results at %s" %savepath)
             self.plot_tally_result(savepath=savepath)
 
         if plot_tally_error == True:
             if self.problem_name:
-                savepath = self.analysis_dir+'/%s_tally_error_compare.png' \
+                savepath = self.analysis_dir+'/%s_tally_error_compare.pdf' \
                            %self.problem_name
             else:
-                savepath = self.analysis_dir+'/tally_error_compare.png'
+                savepath = self.analysis_dir+'/tally_error_compare.pdf'
 
             logger.info("plotting tally error at %s" %savepath)
             self.plot_tally_error(savepath=savepath)
