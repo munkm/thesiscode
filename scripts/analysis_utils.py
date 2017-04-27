@@ -181,19 +181,21 @@ def get_paths(path, analysis_dirname='analysis'):
         timing_file_loc = None
         logger.warn("Timing file not found.")
 
-    anisotropy_file_loc = '%s/problem_anisotropies.h5' %(omega_dir)
-    omega_file_loc = '%s/denovo_omega_output.silo' %(omega_dir)
     if omega_dir is not None:
+        anisotropy_file_loc = '%s/problem_anisotropies.h5' %(omega_dir)
+        omega_file_loc = '%s/denovo_omega_output.silo' %(omega_dir)
         if os.path.isfile(anisotropy_file_loc):
             pass
         else:
             anisotropy_file_loc = None
+
         if os.path.isfile(omega_file_loc):
             pass
         else:
             omega_file_loc = None
     else:
-        ansiotropy_file_loc, omega_file_loc = None, None
+        anisotropy_file_loc = None
+        omega_file_loc = None
 
     fwd_file_loc = '%s/denovo_forward_output.silo' %(fwd_dir)
     if fwd_dir is not None and os.path.isfile(fwd_file_loc):

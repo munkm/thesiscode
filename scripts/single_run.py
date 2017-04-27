@@ -11,7 +11,7 @@ import numpy as np
 from analysis import MCNPOutput, FOMAnalysis, H5Output
 from plotting_utils import ( violinbyenergy, stripbyenergy, boxbyenergy,
                            stripbymetric, violinbymetric,
-                           boxbymetric, names, energy_histogram )
+                           boxbymetric, names, energy_histogram, styles )
 from analysis_utils import (get_paths, verify_input_flags, format_logger,
         metric_names, xscales, get_method_type)
 import json
@@ -243,14 +243,14 @@ class Single_Run(object):
             bins = MCNP_data['tally_data']['energy_groups']
             relative_err = MCNP_data['tally_data']['relative_error']
             energy_histogram(bins, relative_err, loc,
-                    y_title='tally_relative_error')
+                    y_title='Tally Relative Error', **styles[self.method_type])
 
         if input_flags['tally_result'] == True:
             loc = analysis_dir+'/tally_%s_result.pdf' %(tally_number)
             logger.info("plotting tally %s result at %s" %(tally_number, loc))
             bins = MCNP_data['tally_data']['energy_groups']
             tally_result = MCNP_data['tally_data']['tallied_result']
-            energy_histogram(bins, tally_result, loc)
+            energy_histogram(bins, tally_result, loc, **styles[self.method_type])
 
         if input_flags['save_fom_data'] == True:
             loc = analysis_dir+'/tally_%s_foms.txt' %(tally_number)
@@ -311,10 +311,10 @@ class Single_Run(object):
 
             logger.info("saving processed variables to %s" %(varsave))
             all_vars = {
-                        'filenames' : filenames,
-                        'directories' : directories,
-                        'input flags': input_flags,
-                        'datanames' : datanames,
+                        'filenames' : self.filenames,
+                        'directories' : self.directories,
+                        'input flags': self.input_flags,
+                        'datanames' : self.datanames,
                         }
 
             with open(varsave, 'w') as fp:
