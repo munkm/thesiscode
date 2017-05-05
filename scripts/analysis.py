@@ -324,7 +324,36 @@ class H5Output(object):
 
         return groupdata
 
-    def get_data_statistics(self):
+    def get_filter_matrix(self, group, cutoff='mean'):
+        # open the logger
+        logger = logging.getLogger("analysis.H5Output.filtermetric")
+
+        # open the file as readonly
+        f=h5py.File('%s' %(self.outputlocation), 'r')
+
+        data = f['contributon_flux'][group]
+
+        if cutoff == 'mean':
+            cutoff_val = np.mean(data)
+        elif cutoff == 'median':
+            cutoff_val = np.median(data)
+
+        cutoff_val = np.mean(data)
+
+        data[data > cutoff_val] = 1
+        data[data <= cutoff_val] = 0
+
+        unique, counts = np.unique(data, return_counts=True)
+
+        logger.info('Filter matrix created with contributon flux mean value. '
+                 + '%d counts above the mean, ' %counts[0]
+                 + 'and %d counts filtered out ' %counts[1] )
+
+        filter_matrix = data
+
+        return filter_matrix
+
+    def get_data_statistics(self, filter_data=False, **kwargs):
         '''
         Calculates the average value, median value, metric variance,
         and standard deviation for each
@@ -343,12 +372,16 @@ class H5Output(object):
 
         # set up the labelling lists
         metric_names = f.keys()
+        if 'contributon_flux' in metric_names:
+            metric_names.remove('contributon_flux')
         group_numbers = f['forward_anisotropy'].keys()
 
         # set up empty arrays for data storage before loading it in
         no_metrics = len(metric_names)
         no_groups = len(group_numbers)
         data = np.zeros([no_metrics, no_groups, 4])
+
+        counts = {}
 
         # now set up the loops to calculate metrics on subsets of data
         for metric in metric_names:
@@ -360,12 +393,30 @@ class H5Output(object):
                 # the file.
                 data_chunk = f[metric][group][:]
 
+                if filter_data == True:
+                    # sift out any of the values of the flux that lie in
+                    # unimportant regions
+                    filter_mat = self.get_filter_matrix(group, **kwargs)
+                    data_chunk = data_chunk*filter_mat
+
+                    # get rid of all zero-valued data
+                    filtered_data = [data_chunk != 0]
+                    counts[group] = filtered_data.size
+
+                    if filtered_data.size != np.sum(filter_mat):
+                        logger.warning('The filtered data does not tally to the'
+                                + 'same number of nonzero bins as the filter'
+                                + 'matrix.')
+
+                elif filter_data == False:
+                    filtered_data = data_chunk
+
                 # calculate the statistics on the data chunk and put them into
                 # an array.
-                mean = np.mean(data_chunk)
-                median = np.median(data_chunk)
-                std = np.std(data_chunk)
-                var = np.var(data_chunk)
+                mean = np.mean(filtered_data)
+                median = np.median(filtered_data)
+                std = np.std(filtered_data)
+                var = np.var(filtered_data)
                 stats = np.array([mean, median, std, var])
 
                 data[metric_location,group_location,:] = stats
@@ -376,6 +427,9 @@ class H5Output(object):
                            'group numbers' : group_numbers,
                            'statistics' : statistics,
                            'data' : data}
+
+        if counts:
+            stats_container['counts'] = counts
 
         return stats_container
 
