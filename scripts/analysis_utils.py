@@ -50,6 +50,7 @@ def verify_input_flags(input_flags, filenames, directories):
             'fom_convergence': ['mcnp_output_file'],
             'relative_error_by_bin': ['mcnp_output_file'],
             'tally_result' : ['mcnp_output_file'],
+            'save_tally_data' : ['mcnp_output_file'],
             'save_fom_data' : ['mcnp_output_file', 'timing_file'],
             'plot_anisotropy_correlations' : ['mcnp_output_file',
                            'anisotropy_file'],

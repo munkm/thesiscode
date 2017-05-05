@@ -220,16 +220,31 @@ class Single_Run(object):
                                    savepath=analysis_dir+'/%s_boxes.pdf' %group,
                                    log_scale=True)
 
-        FOM_init = FOMAnalysis(filenames['mcnp_output_file'], tally_number,
-                filenames['timing_file'])
+        if filenames['mcnp_output_file'] is not None:
+            if filenames['timing_file'] is not None:
+                logger.debug("Calculating FOMs for Monte Carlo and adjusted"
+                        + " deterministic runtimes." )
+                FOM_init = FOMAnalysis(filenames['mcnp_output_file'], tally_number,
+                        deterministic_timing_file=filenames['timing_file'])
+            else:
+                logger.debug("No timing file found. Calculating FOMs for"
+                        + " standard Monte Carlo without deterministic "
+                        + "timing adjustments")
+                FOM_init = FOMAnalysis(filenames['mcnp_output_file'],
+                        tally_number)
 
-        all_foms = FOM_init.calculate_all_foms()
-        MCNP_data = FOM_init.mc_data
+            all_foms = FOM_init.calculate_all_foms()
+            MCNP_data = FOM_init.mc_data
 
-        self.foms = all_foms
-        self.MCNP_data = MCNP_data
-        self.frames = {'fom_frame': FOM_init.fom_frame,
-                       'tally_frame': FOM_init.tally_frame}
+            self.foms = all_foms
+            self.MCNP_data = MCNP_data
+            self.frames = {'fom_frame': FOM_init.fom_frame,
+                           'tally_frame': FOM_init.tally_frame}
+        else:
+            logger.warning("The MCNP output file was not found. Checked in"
+                    + " %s. None of the analyses " %directories['mcnp_directory']
+                    + "relevant to the Monte Carlo analysis can be performed.")
+
 
         if input_flags['fom_convergence'] == True:
             logger.info("plotting fom convergence for tally %s" %(tally_number))
@@ -299,9 +314,9 @@ class Single_Run(object):
 
             logger.info("saving processed data to %s" %(datasave))
             all_data = {
-                        'all foms' : all_foms,
-                        'mcnp data' : MCNP_data,
-                        'anisotropy data' : anisotropy_data,
+                        'all foms' : self.foms,
+                        'mcnp data' : self.MCNP_data,
+                        'anisotropy data' : self.anisotropy_data,
                         }
 
             # dump the processed data to .pickle file later for accessibility
