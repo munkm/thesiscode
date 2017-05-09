@@ -13,7 +13,7 @@ from plotting_utils import ( violinbyenergy, stripbyenergy, boxbyenergy,
                            stripbymetric, violinbymetric,
                            boxbymetric, names, energy_histogram, styles )
 from analysis_utils import (get_paths, verify_input_flags, format_logger,
-        metric_names, xscales, get_method_type)
+        metric_names, group_names, xscales, get_method_type, selection_names)
 import json
 import pickle
 import os
@@ -116,7 +116,7 @@ class Single_Run(object):
                 'plot_anisotropy_correlations' : plot_anisotropy_with_tallydata,
                 'plot_anisotropy_corrs_median' :plot_anisotropies_median,
                 'plot_anisotropy_corrs_mean' : plot_anisotropies_mean,
-                'select_anisotropies' = select_anisotropies,
+                'select_anisotropies' : select_anisotropies,
                 'base_directory' : directories['top_directory'],
                 'analysis_data_directory' : directories['analysis_directory']
                 }
@@ -153,34 +153,50 @@ class Single_Run(object):
                 groupdata =  anisotropy_file.get_data_by_metric(metric,
                         cutoff=input_flags['select_anisotropies'])
                 subdata = anisotropy_file.get_dataset_by_metric(metric,
-                        num_samples = 1500)
-                name = metric_names[metric]
+                        num_samples = 1500,
+                        cutoff=input_flags['select_anisotropies'])
+
+                # get the data for labelling the plot
+                if metric in metric_names:
+                    name = metric_names[metric]
+                else:
+                    name = metric
+                select = input_flags['select_anisotropies']
+                if select in selection_names:
+                    selection = selection_names[select]
+                else:
+                    selection = select
+                full_title = '%s Distribution, by Energy Group, %s' %(name,
+                        selection)
 
                 if input_flags['violins_for_metric'] == True:
                     logger.info("plotting violins for all energies, %s" %(name))
                     violinbyenergy(data=groupdata['data'],
-                                   plot_title='%s Distribution, by Energy group' %(name),
+                                   plot_title=full_title,
                                    x_title='Energy Group No.',
                                    y_title='Relative Metric Distribution',
-                                   savepath=analysis_dir+'/%s_violin.pdf' %metric,
+                                   savepath=analysis_dir+'/%s_violin_%s.pdf'
+                                             %(metric, select),
                                    log_scale=True)
 
                 if input_flags['boxes_for_metric'] == True:
                     logger.info("plotting boxes for all energies, %s" %(name))
                     boxbyenergy(data=groupdata['data'],
-                                   plot_title='%s Distribution, by Energy group' %(name),
+                                   plot_title=full_title,
                                    x_title='Energy Group No.',
                                    y_title='Relative Metric Distribution',
-                                   savepath=analysis_dir+'/%s_box.pdf' %metric,
+                                   savepath=analysis_dir+'/%s_box_%s.pdf'
+                                             %(metric, select),
                                    log_scale=True)
 
                 if input_flags['strip_for_metric'] == True:
                     logger.info("plotting strips for all energies, %s" %(name))
                     stripbyenergy(data=subdata['data'],
-                                   plot_title='%s Distribution, by Energy group' %(name),
+                                   plot_title=full_title,
                                    x_title='Energy Group No.',
                                    y_title='Relative Metric Distribution',
-                                   savepath=analysis_dir+'/%s_strip.pdf' %metric,
+                                   savepath=analysis_dir+'/%s_strip_%s.pdf'
+                                             %(metric, select),
                                    log_scale=True)
 
 
@@ -194,40 +210,55 @@ class Single_Run(object):
                 groupdata =  anisotropy_file.get_data_by_energy(group,
                         cutoff=input_flags['select_anisotropies'])
                 subdata = anisotropy_file.get_dataset_by_energy(group,
-                        num_samples = 1500)
-                # name = group_names[group]
-                name = group
+                        num_samples = 1500,
+                        cutoff=input_flags['select_anisotropies'])
+
+                # get the information to label the plots
+                if group in group_names:
+                    name = group_names[group]
+                else:
+                    name = group
+                select = input_flags['select_anisotropies']
+                if select in selection_names:
+                    selection = selection_names[select]
+                else:
+                    selection = select
+                full_title = '%s Distribution, by Metric, %s' %(name,
+                        selection)
 
                 if input_flags['strip_for_energy'] == True:
                     logger.info("plotting stripplots for all metrics, %s"
                             %(name))
                     stripbymetric(data=subdata['data'],
-                                   plot_title='%s Distribution, by Metric' %(name),
+                                   plot_title=full_title,
                                    x_title='Metric Type',
                                    x_names=groupdata['names'],
                                    y_title='Relative Metric Distribution Density',
-                                   savepath=analysis_dir+'/%s_strip.pdf' %group,
+                                   savepath=analysis_dir+'/%s_strip_%s.pdf'
+                                             %(group, select),
                                    log_scale=True)
 
                 if input_flags['violins_for_energy'] == True:
                     logger.info("plotting violinplots for all metrics, %s"
                             %(group))
                     violinbymetric(data=groupdata['data'],
-                                   plot_title='%s Distribution, by Metric' %(name),
+                                   plot_title=full_title,
                                    x_title='Metric Type',
                                    x_names=groupdata['names'],
                                    y_title='Relative Metric Distribution',
-                                   savepath=analysis_dir+'/%s_violin.pdf' %group,
+                                   savepath=analysis_dir+'/%s_violin_%s.pdf'
+                                             %(group, select),
                                    log_scale=True)
 
                 if input_flags['boxes_for_energy'] == True:
                     logger.info("plotting boxplots for all metrics, %s" %(name))
                     boxbymetric(data=groupdata['data'],
-                                   plot_title='%s Distribution, by Metric' %(name),
+                                   plot_title=full_title,
                                    x_title='Metric Type',
                                    x_names=groupdata['names'],
                                    y_title='Box of Metric Distribution',
-                                   savepath=analysis_dir+'/%s_boxes.pdf' %group,
+                                   savepath=analysis_dir+'/%s_boxes_%s.pdf'
+                                             %(group, select),
                                    log_scale=True)
 
         if filenames['mcnp_output_file'] is not None:
@@ -352,7 +383,7 @@ class Single_Run(object):
 
                 # plot the anisotropy stats
                 logger.info("plotting anisotropy correlations for anisotropy"
-                           + " values above the median value")
+                           + " values above the mean value")
                 data = anisotropy_data['data']
                 for metric in anisotropy_data['metrics']:
                     loc = analysis_dir+'/%s_stats_mean.pdf' %(metric)

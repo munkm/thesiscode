@@ -295,6 +295,12 @@ metric_names = {u'adjoint_anisotropy': 'Adjoint Anisotropy',
          u'metric_three': 'Metric Three',
          u'metric_two': 'Metric Two'}
 
+group_names = {}
+
+selection_names = {'full': 'Full Anisotropy Dataset',
+        'mean': 'Values Above the Mean Contributon Flux',
+        'median': 'Values Above the Median Contributon Flux'}
+
 xscales = {u'adjoint_anisotropy': 'linear',
          u'forward_anisotropy': 'linear',
          u'metric_five': 'log',

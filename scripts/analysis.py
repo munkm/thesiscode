@@ -163,23 +163,29 @@ class H5Output(object):
         return names
 
     def get_dataset_by_metric(self, metric_name, num_samples = 1500,
-                             flatten_data=True):
+                             flatten_data=True, **kwargs):
         '''
         Returns a dict with the names of each energy group
         and a matrix of data corresponding to a sample of anisotropy data
         (num_samples) for a specified metric name.
         '''
+        # open the logger
+        logger = logging.getLogger("analysis.H5Output.subdatabymetric")
 
         full_dataset = self.get_data_by_metric(metric_name,
-                flatten_data=flatten_data)
+                flatten_data=flatten_data, **kwargs)
         full_data = full_dataset['data']
+
+        logger.info('getting dataset of %s particles for %s' %(num_samples,
+            metric_name))
 
         size = np.shape(full_data)
         num_groups = size[-1]
 
         data = np.zeros(num_samples)
         for group in np.arange(num_groups):
-            dataset = full_data[:,group]
+            datasample = full_data[:,group]
+            dataset = datasample[datasample != 0]
             newdata = np.random.choice(dataset,num_samples)
             data = np.column_stack((data,newdata))
 
@@ -204,6 +210,8 @@ class H5Output(object):
         primarily for plotting, the dimensionality of the flattened array is
         desired.
         '''
+        # open the logger
+        logger = logging.getLogger("analysis.H5Output.databymetric")
 
         # open the file as readonly
         f=h5py.File('%s' %(self.outputlocation), 'r')
@@ -315,7 +323,7 @@ class H5Output(object):
         return groupdata
 
     def get_dataset_by_energy(self, group_number, num_samples = 1500,
-                             flatten_data=True):
+                             flatten_data=True, **kwargs):
         '''
         Returns a dict with the names of eeach energy group
         and a matrix of data corresponding to a sample of anisotropy data (n
@@ -325,16 +333,16 @@ class H5Output(object):
         # open the logger
         logger = logging.getLogger("analysis.H5Output.subdatabyenergy")
 
-        full_dataset = self.get_data_by_energy(group_number,
-                flatten_data=flatten_data)
-        full_data = full_dataset['data']
-
         if type(group_number) == int:
             group_number = 'group_%03d' %group_number
         elif type(group_number) == unicode or str:
             group_number = group_number
         else:
             logger.error('group number is not a recognized type')
+
+        full_dataset = self.get_data_by_energy(group_number,
+                flatten_data=flatten_data, **kwargs)
+        full_data = full_dataset['data']
 
         logger.info('getting dataset of %s particles for %s' %(num_samples,
             group_number))
@@ -344,7 +352,8 @@ class H5Output(object):
 
         data = np.zeros(num_samples)
         for metric in np.arange(num_metrics):
-            dataset = full_data[:,metric]
+            datasample = full_data[:,metric]
+            dataset = datasample[datasample != 0]
             newdata = np.random.choice(dataset,num_samples)
             data = np.column_stack((data,newdata))
 
