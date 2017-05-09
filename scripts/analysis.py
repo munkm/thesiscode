@@ -185,7 +185,7 @@ class H5Output(object):
         data = np.zeros(num_samples)
         for group in np.arange(num_groups):
             datasample = full_data[:,group]
-            dataset = datasample[datasample != 0]
+            dataset = datasample[~np.isnan(datasample)]
             newdata = np.random.choice(dataset,num_samples)
             data = np.column_stack((data,newdata))
 
@@ -353,7 +353,7 @@ class H5Output(object):
         data = np.zeros(num_samples)
         for metric in np.arange(num_metrics):
             datasample = full_data[:,metric]
-            dataset = datasample[datasample != 0]
+            dataset = datasample[~np.isnan(datasample)]
             newdata = np.random.choice(dataset,num_samples)
             data = np.column_stack((data,newdata))
 
