@@ -135,6 +135,7 @@ class H5Output(object):
     '''
     def __init__(self, outputlocation):
         self.outputlocation = str(outputlocation)
+        self.filtermatrix = {}
         pass
 
     # this function still in progress. Not fully functional.
@@ -328,28 +329,41 @@ class H5Output(object):
         # open the logger
         logger = logging.getLogger("analysis.H5Output.filtermetric")
 
-        # open the file as readonly
-        f=h5py.File('%s' %(self.outputlocation), 'r')
+        if cutoff in self.filtermatrix and group in \
+        self.filtermatrix[cutoff]:
+            filter_matrix = self.filtermatrix[cutoff][group]
+            logger.info('Found precalculated %s filter matrix for' %(group)
+                     + ' contributon flux %s value.' %cutoff)
+        else:
+            # open the file as readonly
+            f=h5py.File('%s' %(self.outputlocation), 'r')
 
-        data = f['contributon_flux'][group]
+            data = f['contributon_flux'][group][:]
 
-        if cutoff == 'mean':
-            cutoff_val = np.mean(data)
-        elif cutoff == 'median':
-            cutoff_val = np.median(data)
+            if cutoff == 'mean':
+                cutoff_val = np.mean(data)
+            elif cutoff == 'median':
+                cutoff_val = np.median(data)
 
-        cutoff_val = np.mean(data)
+            data[data > cutoff_val] = 1
+            data[data <= cutoff_val] = 0
 
-        data[data > cutoff_val] = 1
-        data[data <= cutoff_val] = 0
+            unique, counts = np.unique(data, return_counts=True)
 
-        unique, counts = np.unique(data, return_counts=True)
+            logger.info('Filter matrix for %s created with' %(group)
+                     + ' contributon flux %s value.' %cutoff
+                     + ' %d counts above the mean,' %counts[1]
+                     + ' and %d counts filtered out' %counts[0] )
 
-        logger.info('Filter matrix created with contributon flux mean value. '
-                 + '%d counts above the mean, ' %counts[0]
-                 + 'and %d counts filtered out ' %counts[1] )
+            filter_matrix = data
 
-        filter_matrix = data
+            logger.info('Adding %s filter matrix to %s dictionary'
+                    %(group, cutoff))
+            if cutoff in self.filtermatrix:
+                self.filtermatrix[cutoff][group] = filter_matrix
+            else:
+                self.filtermatrix[cutoff] = {}
+                self.filtermatrix[cutoff][group] = filter_matrix
 
         return filter_matrix
 
@@ -400,7 +414,7 @@ class H5Output(object):
                     data_chunk = data_chunk*filter_mat
 
                     # get rid of all zero-valued data
-                    filtered_data = [data_chunk != 0]
+                    filtered_data = data_chunk[data_chunk != 0]
                     counts[group] = filtered_data.size
 
                     if filtered_data.size != np.sum(filter_mat):

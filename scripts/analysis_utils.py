@@ -54,6 +54,10 @@ def verify_input_flags(input_flags, filenames, directories):
             'save_fom_data' : ['mcnp_output_file', 'timing_file'],
             'plot_anisotropy_correlations' : ['mcnp_output_file',
                            'anisotropy_file'],
+            'plot_anisotropy_corrs_median' : ['mcnp_output_file',
+                           'anisotropy_file'],
+            'plot_anisotropy_corrs_mean' : ['mcnp_output_file',
+                           'anisotropy_file'],
             }
 
     input_flags2 = input_flags.copy()

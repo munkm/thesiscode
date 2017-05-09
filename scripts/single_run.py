@@ -69,6 +69,7 @@ class Single_Run(object):
             plot_RE_by_bin=False, plot_tally_results=False,
             save_FoM_data=False, save_tally_data=False,
             plot_anisotropy_with_tallydata=False,
+            plot_anisotropies_median=False, plot_anisotropies_mean=False,
             save_data_json=False):
         ''' This is the driver script to generate analysis data for a single run.
         The user can choose whether to overwrite previous data, which metrics to
@@ -113,6 +114,8 @@ class Single_Run(object):
                 'save_tally_data' : save_tally_data,
                 'save_all_data' : save_data_json,
                 'plot_anisotropy_correlations' : plot_anisotropy_with_tallydata,
+                'plot_anisotropy_corrs_median' :plot_anisotropies_median,
+                'plot_anisotropy_corrs_mean' : plot_anisotropies_mean,
                 'base_directory' : directories['top_directory'],
                 'analysis_data_directory' : directories['analysis_directory']
                 }
@@ -127,7 +130,9 @@ class Single_Run(object):
         input_flags['strip_for_energy'] == True or \
         input_flags['violins_for_energy'] == True or \
         input_flags['boxes_for_energy'] == True or \
-        input_flags['plot_anisotropy_correlations'] == True:
+        input_flags['plot_anisotropy_correlations'] == True or \
+        input_flags['plot_anisotropy_corrs_median'] == True or \
+        input_flags['plot_anisotropy_corrs_mean'] == True:
             anisotropy_file = H5Output(filenames['anisotropy_file'])
             datanames = anisotropy_file.get_datanames()
             self.datanames=datanames
@@ -282,31 +287,79 @@ class Single_Run(object):
             with open(loc, 'w') as fp:
                 fp.write(conv)
 
-        anisotropy_data = None
+        self.anisotropy_data = {}
 
-        if input_flags['plot_anisotropy_correlations'] == True:
+        if input_flags['plot_anisotropy_correlations'] == True or \
+           input_flags['plot_anisotropy_corrs_median'] == True or \
+           input_flags['plot_anisotropy_corrs_mean'] == True:
             # first calculate anisotropy stats
-            logger.info("calculating anisotropy statistics for metrics")
-            anisotropy_data = anisotropy_file.get_data_statistics()
 
-            # plot the anisotropy stats
-            logger.info("plotting anisotropy correlations ")
             from plotting_utils import statscatter
             err = MCNP_data['tally_data']['relative_error']
-            data = anisotropy_data['data']
-            for metric in anisotropy_data['metrics']:
-                loc = analysis_dir+'/%s_stats.pdf' %(metric)
-                name = metric_names[metric]
-                scale = xscales[metric]
-                metric_location = anisotropy_data['metrics'].index(metric)
-                metric_data = anisotropy_data['data'][metric_location]
-                x1 = metric_data[:,0]
-                x2 = metric_data[:,1]
-                x4 = metric_data[:,3]
-                statscatter(x1,x2,x4, err, savepath=loc, metric_name=name,
-                        scale=scale)
 
-        self.anisotropy_data = anisotropy_data
+            if input_flags['plot_anisotropy_correlations'] == True:
+                logger.info("calculating anisotropy statistics for metrics")
+                anisotropy_data = anisotropy_file.get_data_statistics()
+                self.anisotropy_data['full']=anisotropy_data
+
+                # plot the anisotropy stats
+                logger.info("plotting anisotropy correlations ")
+                data = anisotropy_data['data']
+                for metric in anisotropy_data['metrics']:
+                    loc = analysis_dir+'/%s_stats.pdf' %(metric)
+                    name = metric_names[metric]
+                    scale = xscales[metric]
+                    metric_location = anisotropy_data['metrics'].index(metric)
+                    metric_data = anisotropy_data['data'][metric_location]
+                    x1 = metric_data[:,0]
+                    x2 = metric_data[:,1]
+                    x4 = metric_data[:,3]
+                    statscatter(x1,x2,x4, err, savepath=loc, metric_name=name,
+                            scale=scale)
+
+            if input_flags['plot_anisotropy_corrs_median'] == True:
+                logger.info("calculating anisotropy statistics for metrics")
+                anisotropy_data = anisotropy_file.get_data_statistics(
+                        filter_data=True, cutoff='median')
+                self.anisotropy_data['median']=anisotropy_data
+
+                # plot the anisotropy stats
+                logger.info("plotting anisotropy correlations for anisotropy"
+                           + " values above the median value")
+                data = anisotropy_data['data']
+                for metric in anisotropy_data['metrics']:
+                    loc = analysis_dir+'/%s_stats_median.pdf' %(metric)
+                    name = metric_names[metric]
+                    scale = xscales[metric]
+                    metric_location = anisotropy_data['metrics'].index(metric)
+                    metric_data = anisotropy_data['data'][metric_location]
+                    x1 = metric_data[:,0]
+                    x2 = metric_data[:,1]
+                    x4 = metric_data[:,3]
+                    statscatter(x1,x2,x4, err, savepath=loc, metric_name=name,
+                            scale=scale)
+
+            if input_flags['plot_anisotropy_corrs_mean'] == True:
+                logger.info("calculating anisotropy statistics for metrics")
+                anisotropy_data = anisotropy_file.get_data_statistics(
+                        filter_data=True, cutoff='mean')
+                self.anisotropy_data['mean']=anisotropy_data
+
+                # plot the anisotropy stats
+                logger.info("plotting anisotropy correlations for anisotropy"
+                           + " values above the median value")
+                data = anisotropy_data['data']
+                for metric in anisotropy_data['metrics']:
+                    loc = analysis_dir+'/%s_stats_mean.pdf' %(metric)
+                    name = metric_names[metric]
+                    scale = xscales[metric]
+                    metric_location = anisotropy_data['metrics'].index(metric)
+                    metric_data = anisotropy_data['data'][metric_location]
+                    x1 = metric_data[:,0]
+                    x2 = metric_data[:,1]
+                    x4 = metric_data[:,3]
+                    statscatter(x1,x2,x4, err, savepath=loc, metric_name=name,
+                            scale=scale)
 
         if input_flags['save_all_data']==True:
             varsave = analysis_dir+'/processed_data.json'
