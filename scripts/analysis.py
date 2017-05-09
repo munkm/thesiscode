@@ -194,7 +194,7 @@ class H5Output(object):
         return metricdata
 
 
-    def get_data_by_metric(self, metric_name, flatten_data=True):
+    def get_data_by_metric(self, metric_name, flatten_data=True, **kwargs):
         '''
         Returns a dict with the names of each group and a
         matrix of data corresponding to the anisotropy data (groupwise) for a
@@ -216,7 +216,23 @@ class H5Output(object):
 
         # loop through the data in the hdf5 file and load it in
         for group in f['%s' %metric_name]:
-            subdata = f['%s' %metric_name][group][:].flatten()
+            subdata = f['%s' %metric_name][group][:]
+            if kwargs.get('cutoff') == 'mean' or kwargs.get('cutoff') == 'median':
+                filter_mat = self.get_filter_matrix(group, **kwargs)
+                subdata = subdata*filter_mat
+                subdata[subdata == 0] = np.nan
+                subdata = subdata.flatten()
+            elif kwargs.get('cutoff') == 'full':
+                logger.info('cutoff value of full specified. Using all'
+                        + ' anisotropy values for data selection')
+                subdata = subdata.flatten()
+            elif kwargs.get('cutoff') == None:
+                logger.error('cutoff value not specified. Default to plot'
+                        + 'all anisotropy values.')
+                subdata = subdata.flatten()
+            else:
+                logger.error('cutoff value of %s not recognized'
+                        %kwargs.get('cutoff'))
             data = np.row_stack((data,subdata))
             names.append(group)
 
@@ -233,7 +249,7 @@ class H5Output(object):
 
         return metricdata
 
-    def get_data_by_energy(self, group_number, flatten_data=True):
+    def get_data_by_energy(self, group_number, flatten_data=True, **kwargs):
         '''This function will return a dict of the names of each metric that
         have been aquired and an array of data corresponding to the anisotropy
         data for each metric given a specified energy group number. If
@@ -250,7 +266,9 @@ class H5Output(object):
         # set up empty arrays for data storage before loading it in
         matrix_size = f['forward_anisotropy']['group_000'].size
         data = np.zeros([matrix_size])
-        names = []
+        metric_names = f.keys()
+        if 'contributon_flux' in metric_names:
+            metric_names.remove('contributon_flux')
 
         # check to see how user specified group number. Make it usable by
         # function.
@@ -263,10 +281,25 @@ class H5Output(object):
 
         logger.debug('using data for %s' %group_number)
         # loop through the data in the hdf5 file and load it in
-        for metric in f:
-            subdata = f[metric][group_number][:].flatten()
+        for metric in metric_names:
+            subdata = f[metric][group_number][:]
+            if kwargs.get('cutoff') == 'mean' or kwargs.get('cutoff') == 'median':
+                filter_mat = self.get_filter_matrix(group_number, **kwargs)
+                subdata = subdata*filter_mat
+                subdata[subdata == 0] = np.nan
+                subdata = subdata.flatten()
+            elif kwargs.get('cutoff') == 'full':
+                logger.info('cutoff value of full specified. Using all'
+                        + ' anisotropy values for data selection')
+                subdata = subdata.flatten()
+            elif kwargs.get('cutoff') == None:
+                logger.error('cutoff value not specified. Default to plot'
+                        + 'all anisotropy values.')
+                subdata = subdata.flatten()
+            else:
+                logger.error('cutoff value of %s not recognized'
+                        %kwargs.get('cutoff'))
             data = np.row_stack((data,subdata))
-            names.append(metric)
 
         # Rotate the matrix for plotting optimization
         data = np.transpose(data)

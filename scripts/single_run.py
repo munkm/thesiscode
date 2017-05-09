@@ -70,7 +70,7 @@ class Single_Run(object):
             save_FoM_data=False, save_tally_data=False,
             plot_anisotropy_with_tallydata=False,
             plot_anisotropies_median=False, plot_anisotropies_mean=False,
-            save_data_json=False):
+            save_data_json=False, select_anisotropies='full'):
         ''' This is the driver script to generate analysis data for a single run.
         The user can choose whether to overwrite previous data, which metrics to
         plot, and where to save that data. By default it will be saved in an
@@ -116,6 +116,7 @@ class Single_Run(object):
                 'plot_anisotropy_correlations' : plot_anisotropy_with_tallydata,
                 'plot_anisotropy_corrs_median' :plot_anisotropies_median,
                 'plot_anisotropy_corrs_mean' : plot_anisotropies_mean,
+                'select_anisotropies' = select_anisotropies,
                 'base_directory' : directories['top_directory'],
                 'analysis_data_directory' : directories['analysis_directory']
                 }
@@ -146,8 +147,11 @@ class Single_Run(object):
                     + " energy groups")
 
             metrics = datanames['metric_names']
+            if 'contributon_flux' in metrics:
+                metrics.remove('contributon_flux')
             for metric in metrics:
-                groupdata =  anisotropy_file.get_data_by_metric(metric)
+                groupdata =  anisotropy_file.get_data_by_metric(metric,
+                        cutoff=input_flags['select_anisotropies'])
                 subdata = anisotropy_file.get_dataset_by_metric(metric,
                         num_samples = 1500)
                 name = metric_names[metric]
@@ -187,7 +191,8 @@ class Single_Run(object):
                     + " metric types")
             groups = datanames['energy_groups']
             for group in groups:
-                groupdata =  anisotropy_file.get_data_by_energy(group)
+                groupdata =  anisotropy_file.get_data_by_energy(group,
+                        cutoff=input_flags['select_anisotropies'])
                 subdata = anisotropy_file.get_dataset_by_energy(group,
                         num_samples = 1500)
                 # name = group_names[group]
