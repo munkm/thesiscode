@@ -16,7 +16,7 @@ import pandas as pd
 from mcnpoutput import TrackLengthTally
 from plotting_utils import ( names, energy_histogram )
 import matplotlib as mpl
-mpl.use('pdf')
+mpl.use('agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import logging

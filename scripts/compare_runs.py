@@ -15,7 +15,7 @@ from plotting_utils import energy_histogram, styles
 import logging
 import os
 import matplotlib as mpl
-mpl.use('pdf')
+mpl.use('agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd

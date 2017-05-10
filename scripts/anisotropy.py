@@ -9,7 +9,7 @@
 import numpy as np
 import h5py
 import matplotlib as mpl
-mpl.use('pdf')
+mpl.use('agg')
 import matplotlib.pyplot as plt
 import os
 

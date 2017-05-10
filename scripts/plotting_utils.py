@@ -11,7 +11,7 @@ from __future__ import (division, absolute_import, print_function, )
 #-----------------------------------------------------------------------------#
 import numpy as np
 import matplotlib as mpl
-mpl.use('pdf')
+mpl.use('agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib import gridspec
