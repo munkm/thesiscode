@@ -189,34 +189,37 @@ def statscatter(x1, x2, x4, y, savepath, metric_name='default metric name',
     ax1.set_xlabel("Metric Mean Value")
     ax1.set_xscale(scale)
 
-    ax2 = fig.add_subplot(gs[:,25:46])
+    ax2 = fig.add_subplot(gs[:,25:46], sharey=ax1)
     ax2.scatter(x2,y, color=pal[1])
-    ax2.get_yaxis().set_ticklabels([])
     ax2.set_xlabel("Metric Median Value")
     ax2.set_xscale(scale)
 
-    ax3 = fig.add_subplot(gs[:,50:71])
+    ax3 = fig.add_subplot(gs[:,50:71], sharey=ax1)
     ax3.scatter(x1/x2,y, color=pal[2])
-    ax3.get_yaxis().set_ticklabels([])
     ax3.set_xlabel("Metric Mean/Median")
     ax3.set_xscale(scale)
 
-    ax4 = fig.add_subplot(gs[:,75:96])
+    ax4 = fig.add_subplot(gs[:,75:96], sharey=ax1)
     ax4.scatter(x4,y, color=pal[3])
-    ax4.get_yaxis().set_ticklabels([])
     ax4.set_xlabel("Metric Variance")
     ax4.set_xscale(scale)
 
-    ax5 = fig.add_subplot(gs[:,100:107])
-    ax5.hist(y, bins=15,
+    ax5 = fig.add_subplot(gs[:,100:107], sharey=ax1)
+    ax5.hist(y, bins=20,
              orientation='horizontal', color=pal[4])
-    ax5.get_yaxis().set_ticklabels([])
     ax5.get_xaxis().set_ticks([])
     ax5.yaxis.set_label_position("right")
     ax5.set_ylabel("%s Distribution" %y_name, rotation=270, labelpad=15)
 
     plt.subplots_adjust(top=0.87)
     plt.gcf().subplots_adjust(bottom=0.20)
+
+    # remove the y axes labels from all plots except the first one.
+    for ax in plt.gcf().axes[1:]:
+        try:
+            plt.setp(ax.get_yticklabels(), visible=False)
+        except:
+            pass
     if scale == 'linear':
         ax1.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
         ax2.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
