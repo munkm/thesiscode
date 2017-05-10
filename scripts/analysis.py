@@ -176,7 +176,7 @@ class H5Output(object):
                 flatten_data=flatten_data, **kwargs)
         full_data = full_dataset['data']
 
-        logger.info('getting dataset of %s particles for %s' %(num_samples,
+        logger.debug('getting dataset of %s particles for %s' %(num_samples,
             metric_name))
 
         size = np.shape(full_data)
@@ -231,12 +231,12 @@ class H5Output(object):
                 subdata[subdata == 0] = np.nan
                 subdata = subdata.flatten()
             elif kwargs.get('cutoff') == 'full':
-                logger.info('cutoff value of full specified. Using all'
-                        + ' anisotropy values for data selection')
+                logger.debug('cutoff value of full specified. Using all'
+                        + ' anisotropy values for %s data selection' %group)
                 subdata = subdata.flatten()
             elif kwargs.get('cutoff') == None:
                 logger.error('cutoff value not specified. Default to plot'
-                        + 'all anisotropy values.')
+                        + 'all anisotropy values for %s.' %group)
                 subdata = subdata.flatten()
             else:
                 logger.error('cutoff value of %s not recognized'
@@ -297,12 +297,12 @@ class H5Output(object):
                 subdata[subdata == 0] = np.nan
                 subdata = subdata.flatten()
             elif kwargs.get('cutoff') == 'full':
-                logger.info('cutoff value of full specified. Using all'
-                        + ' anisotropy values for data selection')
+                logger.debug('cutoff value of full specified. Using all'
+                        + ' anisotropy values for %s data selection' %metric)
                 subdata = subdata.flatten()
             elif kwargs.get('cutoff') == None:
                 logger.error('cutoff value not specified. Default to plot'
-                        + 'all anisotropy values.')
+                        + 'all anisotropy values for %s.' %metric)
                 subdata = subdata.flatten()
             else:
                 logger.error('cutoff value of %s not recognized'
@@ -344,7 +344,7 @@ class H5Output(object):
                 flatten_data=flatten_data, **kwargs)
         full_data = full_dataset['data']
 
-        logger.info('getting dataset of %s particles for %s' %(num_samples,
+        logger.debug('getting dataset of %s particles for %s' %(num_samples,
             group_number))
 
         size = np.shape(full_data)
@@ -374,7 +374,7 @@ class H5Output(object):
         if cutoff in self.filtermatrix and group in \
         self.filtermatrix[cutoff]:
             filter_matrix = self.filtermatrix[cutoff][group]
-            logger.info('Found precalculated %s filter matrix for' %(group)
+            logger.debug('Found precalculated %s filter matrix for' %(group)
                      + ' contributon flux %s value.' %cutoff)
         else:
             # open the file as readonly
@@ -392,14 +392,14 @@ class H5Output(object):
 
             unique, counts = np.unique(data, return_counts=True)
 
-            logger.info('Filter matrix for %s created with' %(group)
+            logger.debug('Filter matrix for %s created with' %(group)
                      + ' contributon flux %s value.' %cutoff
                      + ' %d counts above the mean,' %counts[1]
                      + ' and %d counts filtered out' %counts[0] )
 
             filter_matrix = data
 
-            logger.info('Adding %s filter matrix to %s dictionary'
+            logger.debug('Adding %s filter matrix to %s dictionary'
                     %(group, cutoff))
             if cutoff in self.filtermatrix:
                 self.filtermatrix[cutoff][group] = filter_matrix
@@ -618,14 +618,14 @@ class FOMAnalysis(object):
         logger = logging.getLogger("analysis.fomanalysis.format_dataframe")
 
         if printtype == '':
-            logger.info('No formatting type specified. Returning user input')
+            logger.debug('No formatting type specified. Returning user input')
             frame = dataframe
         elif printtype == 'string' or printtype == 'str':
-            logger.info('formatting the dataframe to %s' %printtype)
+            logger.debug('formatting the dataframe to %s' %printtype)
             frame = dataframe.to_string(**kwargs)
         elif printtype == 'tex' or printtype == 'latex':
             frame = dataframe.to_latex(**kwargs)
-            logger.info('formatting the dataframe to %s' %printtype)
+            logger.debug('formatting the dataframe to %s' %printtype)
         else:
             logger.warning('%s is not a recognized printing type for this table'
                     %(printtype))
@@ -792,7 +792,7 @@ class FOMAnalysis(object):
             if det_units == 'seconds' and mc_units == 'minutes':
                 det_time = det_time/60.0
             else:
-                logger.info('The units for these timing files are different from'
+                logger.debug('The units for these timing files are different from'
                       'expected vals. det units are %s and mc units are %s'
                       %(det_units, mc_units))
 
