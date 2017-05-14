@@ -332,6 +332,19 @@ class Single_Run(object):
 
             from plotting_utils import statscatter
             err = MCNP_data['tally_data']['relative_error']
+            bins = MCNP_data['tally_data']['energy_groups']
+
+            # because in the deterministic calculation, the first group is the
+            # highest energy, check that MC data is in the same order.
+            if bins[-1] > bins[0]:
+                logger.debug('''tally bins not in the same order as
+                        deterministic result. Reversing order for consistency.''')
+                err = err[::-1]
+                bins = bins[::-1]
+            else:
+                logger.debug('''Monte Carlo and deterministic results in same
+                        energy order.''')
+
 
             if input_flags['plot_anisotropy_correlations'] == True:
                 logger.info("calculating anisotropy statistics for metrics")
