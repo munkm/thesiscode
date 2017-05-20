@@ -190,6 +190,7 @@ class Compare_Runs(object):
         if plot_tally_results == True:
             if self.problem_name:
                 newname = self.problem_name.replace(' ','_')
+                newname = newname.lower()
                 savepath = self.analysis_dir+'/%s_tally_result_compare.pdf' \
                            %newname
             else:
@@ -201,6 +202,7 @@ class Compare_Runs(object):
         if plot_tally_error == True:
             if self.problem_name:
                 newname = self.problem_name.replace(' ','_')
+                newname = newname.lower()
                 savepath = self.analysis_dir+'/%s_tally_error_compare.pdf' \
                            %newname
             else:
@@ -214,6 +216,7 @@ class Compare_Runs(object):
 
             if self.problem_name:
                 newname = self.problem_name.replace(' ','_')
+                newname = newname.lower()
                 savepath = self.analysis_dir+'/%s_tally_foms_compare' \
                            %newname
             else:
@@ -241,6 +244,7 @@ class Compare_Runs(object):
 
             if self.problem_name:
                 newname = self.problem_name.replace(' ','_')
+                newname = newname.lower()
                 savepath = self.analysis_dir+'/%s_tally_converge_compare' \
                            %newname
             else:
