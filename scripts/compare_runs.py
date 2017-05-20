@@ -19,6 +19,7 @@ mpl.use('agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import pickle
 
 ###############################################################################
 
@@ -38,6 +39,7 @@ class Compare_Runs(object):
             else:
                 os.makedirs(dirpath)
                 logfile = '%s/compare_analysis.log' %dirpath
+            self.analysis_dir = dirpath
         else:
             logger.error('%s is not a known directory' %cadisanglefolder)
 
@@ -52,8 +54,11 @@ class Compare_Runs(object):
         self.cadisangledata = self.get_data(cadisanglefolder, 'cadisangle')
         self.cadisdata = self.get_data(cadisfolder, 'cadis')
         self.analogdata = self.get_data(analogfolder, 'analog')
-        self.analysis_dir = self.cadisangledata.directories['analysis_directory']
+        if not self.analysis_dir:
+            self.analysis_dir = self.cadisangledata.directories['analysis_directory']
         self.problem_name = problem_name
+
+        self.saveformat = 'txt'
         pass
 
     def get_data(self, folderpath, method_type=''):
@@ -96,6 +101,7 @@ class Compare_Runs(object):
         Plotting function to plot multiple energy histograms on a single
         figure.
         '''
+        logger = logging.getLogger("analysis.compare")
 
         # gets the tally data for each method.
         energy_groups = \
@@ -106,12 +112,12 @@ class Compare_Runs(object):
 
         # check to see if results are identical. Modify them with a warning log
         # message if they do.
-        if cad == cadang:
+        if cad.all() == cadang.all():
             logger.warning("""The results for cadis and cadisangle seem to be
                     identical. Plotting cadis at 1.05 higher than actual
                     results.""")
             cad = cad*1.05
-        if analog == cadang:
+        if analog.all() == cadang.all():
             logger.warning(""" The results for analog and cadisangle seem to be
                     identical. Plotting analog at 1.10 higher than actual
                     results.""")
@@ -171,17 +177,21 @@ class Compare_Runs(object):
         return newtable
 
     def do_compare_analysis(self, plot_tally_results=False, plot_tally_error=False,
-            make_fomtable=False, make_tallytable=False):
+            make_fomtable=False, make_tallytable=False, save_data=False,
+            saveformat='txt'):
         '''
         Driver function for the compare solutions.
         '''
+
+        self.saveformat=saveformat
 
         logger = logging.getLogger("analysis.compare")
 
         if plot_tally_results == True:
             if self.problem_name:
+                newname = self.problem_name.replace(' ','_')
                 savepath = self.analysis_dir+'/%s_tally_result_compare.pdf' \
-                           %self.problem_name
+                           %newname
             else:
                 savepath = self.analysis_dir+'/tally_result_compare.pdf'
 
@@ -190,8 +200,9 @@ class Compare_Runs(object):
 
         if plot_tally_error == True:
             if self.problem_name:
+                newname = self.problem_name.replace(' ','_')
                 savepath = self.analysis_dir+'/%s_tally_error_compare.pdf' \
-                           %self.problem_name
+                           %newname
             else:
                 savepath = self.analysis_dir+'/tally_error_compare.pdf'
 
@@ -199,33 +210,78 @@ class Compare_Runs(object):
             self.plot_tally_error(savepath=savepath)
 
         if make_fomtable == True:
-            table = self.make_table('fom_frame')
+            fomtable = self.make_table('fom_frame')
 
             if self.problem_name:
-                savepath = self.analysis_dir+'/%s_tally_foms_compare.txt' \
-                           %self.problem_name
+                newname = self.problem_name.replace(' ','_')
+                savepath = self.analysis_dir+'/%s_tally_foms_compare' \
+                           %newname
             else:
-                savepath = self.analysis_dir+'/tally_foms_compare.txt'
+                savepath = self.analysis_dir+'/tally_foms_compare'
+
+            if self.saveformat == 'tex' or self.saveformat == 'latex':
+                savepath = savepath+'.tex'
+                table = fomtable.to_latex(float_format='%.2f')
+            elif self.saveformat == 'txt' or self.saveformat == 'str' or \
+            self.saveformat == 'text':
+                savepath = savepath+'.txt'
+                table = fomtable.to_string(float_format='%.2f')
+            else:
+                logger.warning('''%s is not a recognized save type. Saving as
+                        text instead''' %self.saveformat)
+                savepath == savepath+'.txt'
+                table = fomtable.to_string(float_format='%.2f')
 
             logger.info("saving fom table to %s" %savepath)
-            table = table.to_string(float_format='%.2f')
             with open(savepath, 'w') as fp:
                 fp.write(table)
 
         if make_tallytable == True:
-            table = self.make_table('tally_frame')
+            tallytable = self.make_table('tally_frame')
 
             if self.problem_name:
-                savepath = self.analysis_dir+'/%s_tally_converge_compare.txt' \
-                           %self.problem_name
+                newname = self.problem_name.replace(' ','_')
+                savepath = self.analysis_dir+'/%s_tally_converge_compare' \
+                           %newname
             else:
-                savepath = self.analysis_dir+'/tally_converge_compare.txt'
+                savepath = self.analysis_dir+'/tally_converge_compare'
+
+            if self.saveformat == 'tex' or self.saveformat == 'latex':
+                savepath = savepath+'.tex'
+                table = tallytable.to_latex(float_format='%.2f')
+            elif self.saveformat == 'txt' or self.saveformat == 'str' or \
+            self.saveformat == 'text':
+                savepath = savepath+'.txt'
+                table = tallytable.to_string(float_format='%.2f')
+            else:
+                logger.warning('''%s is not a recognized save type. Saving as
+                        text instead''' %self.saveformat)
+                savepath == savepath+'.txt'
+                table = tallytable.to_string(float_format='%.2f')
 
             logger.info("saving tally convergence table to %s" %savepath)
-
-            table = table.to_string()
             with open(savepath, 'w') as fp:
                 fp.write(table)
+
+        if save_data == True:
+            datasave = self.analysis_dir+'/compare_data.pkl'
+
+            all_data = {}
+            try:
+                all_data['tally table']=tallytable
+            except NameError:
+                all_data['tally table']=self.make_table('tally_frame')
+
+            try:
+                all_data['fom table']=fomtable
+            except NameError:
+                all_data['fom table']=self.make_table('fom_frame')
+
+            logger.info("saving compare data to pickle file")
+
+            with open(datasave, 'w') as fp:
+                pickle.dump(all_data, fp)
+                fp.close()
 
 ###############################################################################
 # end of thesiscode/scripts/compare_runs.py
