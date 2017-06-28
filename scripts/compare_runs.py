@@ -112,7 +112,7 @@ class Compare_Runs(object):
 
         # check to see if results are identical. Modify them with a warning log
         # message if they do.
-        if np.sum(np.abs(cad - cadang)) == 10e-20:
+        if np.sum(np.abs(cad - cadang)) < 10e-20:
             logger.warning("""The results for cadis and cadisangle seem to be
                     identical. Plotting cadis at 1.05 higher than actual
                     results.""")
