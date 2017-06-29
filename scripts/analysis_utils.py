@@ -214,6 +214,12 @@ def get_paths(path, analysis_dirname='analysis'):
     else:
         adj_file_loc = None
 
+    omnibus_file_loc = '%s/omnibus.pp.json' %(adj_dir)
+    if adj_dir is not None and os.path.isfile(omnibus_file_loc):
+        omnibus_file_loc = omnibus_file_loc
+    else:
+        omnibus_file_loc = None
+
     output_file_loc = '%s/fields.silo' %(output_dir)
     if output_dir is not None and os.path.isfile(output_file_loc):
         output_file_loc = output_file_loc
@@ -233,6 +239,7 @@ def get_paths(path, analysis_dirname='analysis'):
                  'omega_flux_file': omega_file_loc,
                  'fwd_flux_file' : fwd_file_loc,
                  'adj_flux_file' : adj_file_loc,
+                 'omni_out_file' : omnibus_file_loc,
                  'output_file' : output_file_loc,
                  'mcnp_output_file' : mcnp_output_loc,
                  'wwinp_file': wwinp_loc,
@@ -277,7 +284,17 @@ def get_method_type(filenames, directories):
 
     return method_type
 
+#-----------------------------------------------------------------------------#
 
+def get_num_cores(filepath):
+    filepath = str(filepath)
+    with open(filepath) as fp:
+        data = json.load(fp)
+        if data['run']['np']:
+            num_cores = data['run']['np']
+        else:
+            num_cores = 1
+        return num_cores
 
 #-----------------------------------------------------------------------------#
 

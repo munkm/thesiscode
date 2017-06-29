@@ -266,7 +266,8 @@ class Single_Run(object):
                 logger.debug("Calculating FOMs for Monte Carlo and adjusted"
                         + " deterministic runtimes." )
                 FOM_init = FOMAnalysis(filenames['mcnp_output_file'], tally_number,
-                        deterministic_timing_file=filenames['timing_file'])
+                        deterministic_timing_file=filenames['timing_file'],
+                        omnibus_output_file=filenames['omni_out_file'])
             else:
                 logger.debug("No timing file found. Calculating FOMs for"
                         + " standard Monte Carlo without deterministic "
