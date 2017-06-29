@@ -15,6 +15,7 @@ import h5py
 import pandas as pd
 from mcnpoutput import TrackLengthTally
 from plotting_utils import ( names, energy_histogram )
+from analysis_utils import get_num_cores
 import matplotlib as mpl
 mpl.use('agg')
 import matplotlib.pyplot as plt
@@ -56,6 +57,7 @@ class MCNPOutput(object):
 
         return output_container
 
+
 #-----------------------------------------------------------------------------#
 
 class TimingOutput(object):
@@ -63,11 +65,12 @@ class TimingOutput(object):
     This class reads in the timing dict from the timing.json file ouputted from
     a modified ADVANTG run.
     '''
-    def __init__(self, timingfilelocation):
+    def __init__(self, timingfilelocation, num_cores=None):
         '''
         Adds timingfile location to class as object.
         '''
         self.timingfile = str(timingfilelocation)
+        self.cores = num_cores
         pass
 
     def get_timing_data(self, extraopts=['strings']):
@@ -99,30 +102,79 @@ class TimingOutput(object):
 
         ignore_keys = defaults + extraopts
 
-        timing_keys = tf.keys()
-        full_det_time = np.sum(tf.values())
-        newtime = full_det_time
-        for option in ignore_keys:
-            if option not in timing_keys:
-                logger.debug('%s not in timing output. ' %option
-                      +  ' Not including it in calculation')
-            else:
-                logger.debug('%s found in timing output. ' %option
-                      +  ' Subtracting value from total deterministic'
-                      +  ' runtime')
+        times = self.split_timing_dict(tf, ignore_keys)
 
-                newtime = newtime-tf[option]
+        adv_time = np.sum(times['advantg_times'].values())
+        denovo_time = np.sum(times['denovo_times'].values())
+
+        if self.cores is not None:
+            logger.debug('''calculating adjusted denovo runtime by %.2f seconds and
+                    %d number of cores to get walltime''' %(denovo_time,
+                        self.cores))
+            denovo_time = self.cores*denovo_time
+        omega_time = np.sum(times['omega_times'].values())
+        dispose_time = np.sum(times['dispose_times'].values())
+
+        totals = {'advantg_time': adv_time,
+                  'denovo_time': denovo_time,
+                  'omega_time': omega_time,
+                  'dispose_time': dispose_time}
+        times['totals'] = totals
+
+        newtime = adv_time + denovo_time + omega_time
+        full_det_time = newtime + dispose_time
 
         timing_data = {
                 'full_deterministic_time': full_det_time,
                 'adjusted_deterministic_time': newtime,
-                'excluded_keys' : ignore_keys,
-                'all_timing_keys': timing_keys,
+                'num_cores' : self.cores,
+                'timing_dicts' : times,
                 'units':'seconds'
                 }
 
         return timing_data
 
+    def split_timing_dict(self, timingdict, ignore_keys):
+        # open the logger
+        logger = logging.getLogger("analysis.fomanalysis.timing_data")
+
+        # define the keys that will go into each dictionary
+        denovo_keys=['Loading material compositions',
+                     'Executing Denovo',
+                     'Calculating Denovo responses',
+                     'Saving Denovo responses',
+                     ]
+        omega_keys=['Calculating the omega fluxes',
+                    'Reading and cleaning angular flux data from disk',
+                    'Writing omega solution to disk',
+                    ]
+        # advantg dict not defined becuase everything not in denovo, omega, or
+        # dispose keys will go to advantg dictionary.
+
+        dispose_keys=ignore_keys
+
+        advantg_dict={}
+        denovo_dict={}
+        omega_dict={}
+        dispose_dict={}
+
+        for key in timingdict:
+            if key in denovo_keys:
+                denovo_dict[key]=timingdict[key]
+            elif key in omega_keys:
+                omega_dict[key]=timingdict[key]
+            elif key in dispose_keys:
+                dispose_dict[key]=timingdict[key]
+            else:
+                advantg_dict[key]=timingdict[key]
+
+        alltimes = {
+                'advantg_times': advantg_dict,
+                'denovo_times': denovo_dict,
+                'omega_times': omega_dict,
+                'dispose_times': dispose_dict}
+
+        return alltimes
 
 
 #-----------------------------------------------------------------------------#
@@ -522,7 +574,8 @@ class FOMAnalysis(object):
     deterministic runtime will also be calculated.
     '''
     def __init__(self, MC_output_file, tallynumber,
-            deterministic_timing_file='', datasavepath=''):
+            deterministic_timing_file='', omnibus_output_file='',
+            datasavepath=''):
         '''
         Sets up variables in the class that are usable by all class functions
         '''
@@ -533,6 +586,7 @@ class FOMAnalysis(object):
         self.mc_output_file = MC_output_file
         self.tallynumber = tallynumber
         self.det_timing_file = deterministic_timing_file
+        self.omnibus_output_file = omnibus_output_file
 
         # read in the relevant data for analysis into objects
         # first, monte carlo data:
@@ -541,9 +595,13 @@ class FOMAnalysis(object):
 
         # then, if a deterministic timing file has been specified, read that
         # data to an object as well.
+        #
+        if self.omnibus_output_file:
+            self.num_cores = get_num_cores(self.omnibus_output_file)
 
         if deterministic_timing_file:
-            self.det_timingdata = TimingOutput(self.det_timing_file).get_timing_data()
+            self.det_timingdata = TimingOutput(self.det_timing_file,
+                    num_cores=self.num_cores).get_timing_data()
         else:
             self.det_timingdata = None
 
@@ -666,6 +724,11 @@ class FOMAnalysis(object):
                 xlabel=x_label, ylabel=y_label, plot_name=plt_name)
         pass
 
+    def generate_timing_frame(self):
+        'Returns a dataframe of all timing data for the problem. If only an
+        MCNP input exists, then only MCNP data will be reported.'
+
+
     def generate_fom_frame(self):
         '''
         Returns a datframe of all FOMS for a tally. If only an MCNP input exists,
@@ -699,6 +762,7 @@ class FOMAnalysis(object):
 
         # put the data into a datframe.
         frame = pd.DataFrame(data, index=labels)
+        frame = frame.replace([np.inf, -np.inf], '--')
 
         # add the frame to the data object.
         self.fom_frame = frame
