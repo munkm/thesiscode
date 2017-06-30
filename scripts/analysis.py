@@ -114,14 +114,16 @@ class TimingOutput(object):
             denovo_time = self.cores*denovo_time
         omega_time = np.sum(times['omega_times'].values())
         dispose_time = np.sum(times['dispose_times'].values())
+        total_time = denovo_time + omega_time + adv_time
 
         totals = {'advantg_time': adv_time,
                   'denovo_time': denovo_time,
                   'omega_time': omega_time,
-                  'dispose_time': dispose_time}
+                  'dispose_time': dispose_time,
+                  'total': total_time}
         times['totals'] = totals
 
-        newtime = adv_time + denovo_time + omega_time
+        newtime = total_time
         full_det_time = newtime + dispose_time
 
         timing_data = {
@@ -608,6 +610,7 @@ class FOMAnalysis(object):
         # reserve some variables for accessibility later
         self.all_foms = {}
         self.fom_frame = self.generate_fom_frame()
+        self.timing_frame = self.generate_timing_frame()
         self.tally_frame = self.get_tallyframe(self.mc_data['fom_trends'],
                           index='nps')
 
@@ -725,9 +728,70 @@ class FOMAnalysis(object):
         pass
 
     def generate_timing_frame(self):
-        'Returns a dataframe of all timing data for the problem. If only an
-        MCNP input exists, then only MCNP data will be reported.'
+        '''Returns a dataframe of all timing data for the problem. If only an
+        MCNP input exists, then only MCNP data will be reported.
+        '''
 
+        # open the logger
+        logger = logging.getLogger('analysis.fomanalysis.timingrame')
+
+        # pull in the monte carlo data from MCrun.
+        std_fom_time = self.mc_data['timing']['mcrun_time']['time']
+        mc_units = self.mc_data['timing']['mcrun_time']['units']
+
+        MCNP_time = {'total': [std_fom_time]}
+
+        if self.det_timingdata is not None:
+            logger.info('''Constructing
+                    timing table with MCNP data from %s and timing data from
+                    %s. Parallelized times will be multiplied by %d cores.'''
+                    %(self.mc_output_file, self.det_timing_file, self.num_cores))
+            totals = self.det_timingdata['timing_dicts']['totals']
+            det_times = totals.copy()
+            det_units = self.det_timingdata['units']
+            total_det_time = det_times['denovo_time']
+
+            # make sure units of time match between files
+            if det_units == 'seconds' and mc_units == 'minutes':
+                det_times = dict((key, [values/60.0]) for key, values in \
+                        det_times.iteritems())
+
+            elif det_units == mc_units:
+                logger.debug('The units for the deterministic timing file and '
+                        'the monte carlo file are the same: %s' %(det_units))
+
+            else:
+                logger.debug('The units for these timing files are different from'
+                      'expected vals. det units are %s and mc units are %s'
+                      %(det_units, mc_units))
+
+            ttime = MCNP_time['total'][0]+det_times['total'][0]
+
+            walltime = {'total': [ttime]}
+
+            frame1 = pd.DataFrame(det_times).transpose()
+            frame2 = pd.DataFrame(MCNP_time).transpose()
+            frame3 = pd.DataFrame(walltime).transpose()
+
+            data = [frame1, frame2, frame3]
+            labels = ['deterministic time', 'MCNP time', 'wall time']
+            frame = pd.concat(data, keys=labels)
+            frame.columns = ['time (%s)' %(mc_units)]
+
+        else:
+            logger.debug('''No deterministic timing data found. Constructing
+                    timing table with MCNP data only.''')
+
+            ttime = MCNP_time['total'][0]
+            walltime = {'total': [ttime]}
+
+            frame1 = pd.DataFrame(MCNP_time).transpose()
+            frame3 = pd.DataFrame(walltime).transpose()
+            frame = pd.concat([frame1,frame3], keys=['MCNP time','wall time'])
+            frame.columns = ['time (%s)' %(mc_units)]
+
+        self.timing_frame = frame
+        return frame
 
     def generate_fom_frame(self):
         '''
