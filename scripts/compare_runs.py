@@ -214,7 +214,6 @@ class Compare_Runs(object):
 
         if make_fomtable == True:
             fomtable = self.make_table('fom_frame')
-            fomtable = fomtable.replace(np.NaN, '--')
 
             if self.problem_name:
                 newname = self.problem_name.replace(' ','_')
