@@ -826,7 +826,6 @@ class FOMAnalysis(object):
 
         # put the data into a datframe.
         frame = pd.DataFrame(data, index=labels)
-        frame = frame.replace([np.inf, -np.inf], '--')
 
         # add the frame to the data object.
         self.fom_frame = frame
