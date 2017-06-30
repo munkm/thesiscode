@@ -177,7 +177,8 @@ class Compare_Runs(object):
         return newtable
 
     def do_compare_analysis(self, plot_tally_results=False, plot_tally_error=False,
-            make_fomtable=False, make_tallytable=False, save_data=False,
+            make_fomtable=False, make_timingtable=False,
+            make_tallytable=False, save_data=False,
             saveformat='txt'):
         '''
         Driver function for the compare solutions.
@@ -213,6 +214,7 @@ class Compare_Runs(object):
 
         if make_fomtable == True:
             fomtable = self.make_table('fom_frame')
+            fomtable = fomtable.replace(np.NaN, '--')
 
             if self.problem_name:
                 newname = self.problem_name.replace(' ','_')
@@ -225,15 +227,51 @@ class Compare_Runs(object):
             if self.saveformat == 'tex' or self.saveformat == 'latex':
                 savepath = savepath+'.tex'
                 table = fomtable.to_latex(float_format='%.2f')
+                table = table.decode("utf-8").replace(r"NaN", \
+                        "--").encode("utf-8")
             elif self.saveformat == 'txt' or self.saveformat == 'str' or \
             self.saveformat == 'text':
                 savepath = savepath+'.txt'
                 table = fomtable.to_string(float_format='%.2f')
+                table = table.decode("utf-8").replace(r"NaN", \
+                        "--").encode("utf-8")
             else:
                 logger.warning('''%s is not a recognized save type. Saving as
                         text instead''' %self.saveformat)
                 savepath == savepath+'.txt'
                 table = fomtable.to_string(float_format='%.2f')
+
+            logger.info("saving fom table to %s" %savepath)
+            with open(savepath, 'w') as fp:
+                fp.write(table)
+
+        if make_timingtable == True:
+            timingtable = self.make_table('timing_frame')
+
+            if self.problem_name:
+                newname = self.problem_name.replace(' ','_')
+                newname = newname.lower()
+                savepath = self.analysis_dir+'/%s_tally_times_compare' \
+                           %newname
+            else:
+                savepath = self.analysis_dir+'/tally_times_compare'
+
+            if self.saveformat == 'tex' or self.saveformat == 'latex':
+                savepath = savepath+'.tex'
+                table = timingtable.to_latex(float_format='%.2f')
+                table = table.decode("utf-8").replace(r"NaN", \
+                        "--").encode("utf-8")
+            elif self.saveformat == 'txt' or self.saveformat == 'str' or \
+            self.saveformat == 'text':
+                savepath = savepath+'.txt'
+                table = timingtable.to_string(float_format='%.2f')
+                table = table.decode("utf-8").replace(r"NaN", \
+                        "--").encode("utf-8")
+            else:
+                logger.warning('''%s is not a recognized save type. Saving as
+                        text instead''' %self.saveformat)
+                savepath == savepath+'.txt'
+                table = timingtable.to_string(float_format='%.2f')
 
             logger.info("saving fom table to %s" %savepath)
             with open(savepath, 'w') as fp:

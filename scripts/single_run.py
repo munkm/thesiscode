@@ -281,7 +281,8 @@ class Single_Run(object):
             self.foms = all_foms
             self.MCNP_data = MCNP_data
             self.frames = {'fom_frame': FOM_init.fom_frame,
-                           'tally_frame': FOM_init.tally_frame}
+                           'tally_frame': FOM_init.tally_frame,
+                           'timing_frame': FOM_init.timing_frame}
         else:
             logger.warning("The MCNP output file was not found. Checked in"
                     + " %s. None of the analyses " %directories['mcnp_directory']
