@@ -141,14 +141,18 @@ class StudyMaker(object):
                 copy('%s/%s' %(newpath,input_name), '%s/%s' %(studypath,input_name))
         print('%d studies created at %s' %(num_studies,newpath))
 
-    def make_submission_script(self, input_base_file):
+    def make_submission_script(self, input_base_file, name=''):
         '''
         Generates a PBS submission script for the parametric study. For the
         moment, this is limited to sequential runs in a single file.
         '''
         f = open(input_base_file)
         f_name = os.path.basename(input_base_file)
-        f_name = os.path.splitext(f_name)[0]+'_edit'+os.path.splitext(f_name)[1]
+        if name:
+            [prefix, suffix] = os.path.splitext(f_name)
+            f_name = name+suffix
+        else:
+            f_name = os.path.splitext(f_name)[0]+'_edit'+os.path.splitext(f_name)[1]
         newpath = self.path
         edited_file = newpath+'/'+f_name
         lines = f.readlines()
@@ -159,11 +163,21 @@ class StudyMaker(object):
             for value in self.opt_dict[item]:
                 filebase = os.path.basename(self.filename)
                 studypath = newpath+'/%s_%s/' %(item,value)
-                studyline1 = 'cd %s \n' %(studypath)
-                studyline2 = 'advantg %s \n' %(filebase)
+                studyline1 = 'cd "%s" \n' %(studypath)
+                studylinea = 'echo "Beginning PBS execution at ' + \
+                        '$(date) for %s %s in $(pwd)" \n' %(item, value)
+                studylineb = 'echo ">>> PBS nodes: ${PBS_NUM_NODES}" \n'
+                studylinec = 'echo ">>> PBS cores per node: ${PBS_NUM_PPN}" \n'
+                studyline2 = '"${ADVANTG}" %s \n' %(filebase)
+                studylined = 'echo ">>> Finished PBS execution for ' + \
+                        '%s %s at $(date)" \n' %(item,value)
                 print(studyline1, studyline2)
                 lines.append(studyline1)
+                lines.append(studylinea)
+                lines.append(studylineb)
+                lines.append(studylinec)
                 lines.append(studyline2)
+                lines.append(studylined)
         nf = open(edited_file, 'w')
         nf.writelines(lines)
         nf.close()
