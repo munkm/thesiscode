@@ -96,7 +96,7 @@ class Compare_Runs(object):
         return
 
     def plot_compare(self, compare_type='tallied_result',
-                     savepath=None, y_label='', title=''):
+                     savepath=None, y_label='', title='', ignore_analog=False):
         '''
         Plotting function to plot multiple energy histograms on a single
         figure.
@@ -126,12 +126,20 @@ class Compare_Runs(object):
         # open figure object
         fig = plt.figure()
 
+        if compare_type == 'relative_error' and analog.any() >= .999:
+            logger.warning(""" The relative error results for analog has 100
+                    percent error in some locations. Not plotting analog results
+                    in relative error plot. """)
+            ignore_analog=True
+
+
         # plot a histogram on the figure for each method type.
         energy_histogram(energy_groups, cadang, None,
                 **styles[self.cadisangledata.method_type])
         energy_histogram(energy_groups, cad, None,
                 **styles[self.cadisdata.method_type])
-        energy_histogram(energy_groups, analog, None,
+        if ignore_analog == False:
+            energy_histogram(energy_groups, analog, None,
                 **styles[self.analogdata.method_type])
 
         plt.legend()
@@ -225,13 +233,15 @@ class Compare_Runs(object):
 
             if self.saveformat == 'tex' or self.saveformat == 'latex':
                 savepath = savepath+'.tex'
-                table = fomtable.to_latex(float_format='%.2f')
+                table = fomtable.to_latex(float_format='%.3g')
+                table = table.decode("utf-8").replace(r"inf", \
+                        "--").encode("utf-8")
                 table = table.decode("utf-8").replace(r"NaN", \
                         "--").encode("utf-8")
             elif self.saveformat == 'txt' or self.saveformat == 'str' or \
             self.saveformat == 'text':
                 savepath = savepath+'.txt'
-                table = fomtable.to_string(float_format='%.2f')
+                table = fomtable.to_string(float_format='%.3g')
                 table = table.decode("utf-8").replace(r"NaN", \
                         "--").encode("utf-8")
             else:
