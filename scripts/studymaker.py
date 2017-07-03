@@ -141,7 +141,7 @@ class StudyMaker(object):
                 copy('%s/%s' %(newpath,input_name), '%s/%s' %(studypath,input_name))
         print('%d studies created at %s' %(num_studies,newpath))
 
-    def make_submission_script(self, input_base_file, name=''):
+    def make_submission_script(self, input_base_file, name='', mcnpscript=False):
         '''
         Generates a PBS submission script for the parametric study. For the
         moment, this is limited to sequential runs in a single file.
@@ -159,6 +159,11 @@ class StudyMaker(object):
         lines.append('\n')
         print('edited runscript file located at: %s' %(edited_file))
         print('lines added to file:')
+        mcnpline1 = 'mkdir "./mcnp" \n'
+        mcnpline2 = 'rm "./mcnp/"* \n'
+        mcnpline3 = 'cp "./output/"*inp* "./mcnp/" \n'
+        mcnpline4 = 'cd "./mcnp" \n'
+        allmlines = mcnpline1+mcnpline2+mcnpline3+mcnpline4
         for item in self.opt_dict:
             for value in self.opt_dict[item]:
                 filebase = os.path.basename(self.filename)
@@ -168,7 +173,11 @@ class StudyMaker(object):
                         '$(date) for %s %s in $(pwd)" \n' %(item, value)
                 studylineb = 'echo ">>> PBS nodes: ${PBS_NUM_NODES}" \n'
                 studylinec = 'echo ">>> PBS cores per node: ${PBS_NUM_PPN}" \n'
-                studyline2 = '"${ADVANTG}" %s \n' %(filebase)
+                if mcnpscript == False:
+                    studyline2 = '"${ADVANTG}" %s \n' %(filebase)
+                else:
+                    mcnpexec = '"${LAUNCHER}" "${MCNP}" "i=inp o=out" \n'
+                    studyline2 = allmlines+mcnpexec
                 studylined = 'echo ">>> Finished PBS execution for ' + \
                         '%s %s at $(date)" \n' %(item,value)
                 print(studyline1, studyline2)
