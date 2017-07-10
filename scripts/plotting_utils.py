@@ -188,6 +188,8 @@ def statscatter(x1, x2, x4, y, savepath, metric_name='default metric name',
     ax1.set_ylabel(y_name)
     ax1.set_xlabel("Metric Mean Value")
     ax1.set_xscale(scale)
+    if y.max()/y.min() >= 25.:
+        ax1.set_yscale('log')
 
     ax2 = fig.add_subplot(gs[:,25:46], sharey=ax1)
     ax2.scatter(x2,y, color=pal[1])

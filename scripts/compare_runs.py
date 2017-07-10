@@ -186,7 +186,8 @@ class Compare_Runs(object):
 
     def do_compare_analysis(self, plot_tally_results=False, plot_tally_error=False,
             make_fomtable=False, make_timingtable=False,
-            make_tallytable=False, save_data=False,
+            make_tallytable=False, save_data=False, plot_compare_corrs=False,
+            plot_compare_corrs_median=False, plot_compare_corrs_mean=False,
             saveformat='txt'):
         '''
         Driver function for the compare solutions.
@@ -313,6 +314,123 @@ class Compare_Runs(object):
             logger.info("saving tally convergence table to %s" %savepath)
             with open(savepath, 'w') as fp:
                 fp.write(table)
+
+        if plot_compare_corrs==True or plot_compare_corrs_median==True or \
+                plot_compare_corrs_mean==True:
+            from plotting_utils import statscatter
+            from analysis import H5Output
+            from analysis_utils import (metric_names, group_names, xscales,
+                    selection_names)
+
+            anisotropy_filename = self.cadisangledata.filenames['anisotropy_file']
+            anisotropy_file = H5Output(anisotropy_filename)
+            datanames = anisotropy_file.get_datanames()
+
+            err_cad = self.cadisdata.MCNP_data['tally_data']['relative_error']
+            bins_cad = self.cadisdata.MCNP_data['tally_data']['energy_groups']
+            time_cad = self.cadisdata.MCNP_data['timing']['mcrun_time']['time']
+            foms_cad = 1/((err_cad*err_cad)*time_cad)
+
+
+            err_cadang = self.cadisangledata.MCNP_data['tally_data']['relative_error']
+            bins_cadang = self.cadisangledata.MCNP_data['tally_data']['energy_groups']
+            time_cadang = self.cadisangledata.MCNP_data['timing']['mcrun_time']['time']
+            foms_cadang = 1/((err_cadang*err_cadang)*time_cadang)
+
+            err = err_cadang/err_cad
+            foms = foms_cadang/foms_cad
+
+            if np.array_equal(bins_cadang,bins_cad):
+                bins = bins_cadang
+            else:
+                logger.warning('''The bins between cadisangle and CADIS do not match.
+                        There will likely be issues with plotting the anisotropies
+                        The cadis bins are: %s \n \n and the cadisangle bins are: %s
+                        ''' %(np.array_str(bins_cad), np.array_str(bins_cadang)))
+
+            # because in the deterministic calculation, the first group is the
+            # highest energy, check that MC data is in the same order.
+            if bins[-1] > bins[0]:
+                logger.debug('''tally bins not in the same order as
+                        deterministic result. Reversing order for consistency.''')
+                err = err[::-1]
+                bins = bins[::-1]
+                foms = foms[::-1]
+            else:
+                logger.debug('''Monte Carlo and deterministic results in same
+                        energy order.''')
+
+
+            if plot_compare_corrs == True:
+                logger.info("calculating anisotropy statistics for metrics")
+                anisotropy_data = anisotropy_file.get_data_statistics()
+
+                # plot the anisotropy stats
+                logger.info("plotting anisotropy correlations ")
+                data = anisotropy_data['data']
+                for metric in anisotropy_data['metrics']:
+                    loc1 = self.analysis_dir+'/%s_err_stats_full.pdf' %(metric)
+                    loc2 = self.analysis_dir+'/%s_fom_stats_full.pdf' %(metric)
+                    name = metric_names[metric]
+                    scale = xscales[metric]
+                    metric_location = anisotropy_data['metrics'].index(metric)
+                    metric_data = anisotropy_data['data'][metric_location]
+                    x1 = metric_data[:,0]
+                    x2 = metric_data[:,1]
+                    x4 = metric_data[:,3]
+                    statscatter(x1,x2,x4, err, savepath=loc1, metric_name=name,
+                            scale=scale, y_name=r'I$_{RE}$')
+                    statscatter(x1,x2,x4, foms, savepath=loc2, metric_name=name,
+                            scale=scale, y_name=r'I$_{FOM}$')
+
+            if plot_compare_corrs_median == True:
+                logger.info("calculating anisotropy statistics for metrics" +
+                        " at values above the median")
+                anisotropy_data = anisotropy_file.get_data_statistics(
+                        filter_data=True, cutoff='median')
+
+                # plot the anisotropy stats
+                logger.info("plotting anisotropy correlations ")
+                data = anisotropy_data['data']
+                for metric in anisotropy_data['metrics']:
+                    loc1 = self.analysis_dir+'/%s_err_stats_median.pdf' %(metric)
+                    loc2 = self.analysis_dir+'/%s_fom_stats_median.pdf' %(metric)
+                    name = metric_names[metric]
+                    scale = xscales[metric]
+                    metric_location = anisotropy_data['metrics'].index(metric)
+                    metric_data = anisotropy_data['data'][metric_location]
+                    x1 = metric_data[:,0]
+                    x2 = metric_data[:,1]
+                    x4 = metric_data[:,3]
+                    statscatter(x1,x2,x4, err, savepath=loc1, metric_name=name,
+                            scale=scale, y_name=r'I$_{RE}$')
+                    statscatter(x1,x2,x4, foms, savepath=loc2, metric_name=name,
+                            scale=scale, y_name=r'I$_{FOM}$')
+
+
+            if plot_compare_corrs_mean == True:
+                logger.info("calculating anisotropy statistics for metrics" +
+                        " at values above the mean")
+                anisotropy_data = anisotropy_file.get_data_statistics(
+                        filter_data=True, cutoff='mean')
+
+                # plot the anisotropy stats
+                logger.info("plotting anisotropy correlations ")
+                data = anisotropy_data['data']
+                for metric in anisotropy_data['metrics']:
+                    loc1 = self.analysis_dir+'/%s_err_stats_mean.pdf' %(metric)
+                    loc2 = self.analysis_dir+'/%s_fom_stats_mean.pdf' %(metric)
+                    name = metric_names[metric]
+                    scale = xscales[metric]
+                    metric_location = anisotropy_data['metrics'].index(metric)
+                    metric_data = anisotropy_data['data'][metric_location]
+                    x1 = metric_data[:,0]
+                    x2 = metric_data[:,1]
+                    x4 = metric_data[:,3]
+                    statscatter(x1,x2,x4, err, savepath=loc1, metric_name=name,
+                            scale=scale, y_name=r'I$_{RE}$')
+                    statscatter(x1,x2,x4, foms, savepath=loc2, metric_name=name,
+                            scale=scale, y_name=r'I$_{FOM}$')
 
         if save_data == True:
             datasave = self.analysis_dir+'/compare_data.pkl'
