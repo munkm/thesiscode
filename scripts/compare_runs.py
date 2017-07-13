@@ -76,16 +76,16 @@ class Compare_Runs(object):
 
         return data
 
-    def plot_tally_result(self, savepath=None):
+    def plot_tally_result(self, savepath=None, **kwargs):
         '''
         Plots a histogram of the tally result for all methods.
         '''
         self.plot_compare(compare_type='tallied_result',
                 y_label='Tally Result', title='%s comparison of tally result'
-                %self.problem_name, savepath=savepath)
+                %self.problem_name, savepath=savepath, **kwargs)
         return
 
-    def plot_tally_error(self, savepath=None):
+    def plot_tally_error(self, savepath=None, **kwargs):
         '''
         Plots a histogram of the tally relative error for each method.
         '''
@@ -188,7 +188,7 @@ class Compare_Runs(object):
             make_fomtable=False, make_timingtable=False,
             make_tallytable=False, save_data=False, plot_compare_corrs=False,
             plot_compare_corrs_median=False, plot_compare_corrs_mean=False,
-            saveformat='txt'):
+            saveformat='txt', **kwargs):
         '''
         Driver function for the compare solutions.
         '''
@@ -207,7 +207,7 @@ class Compare_Runs(object):
                 savepath = self.analysis_dir+'/tally_result_compare.pdf'
 
             logger.info("plotting tally results at %s" %savepath)
-            self.plot_tally_result(savepath=savepath)
+            self.plot_tally_result(savepath=savepath, **kwargs)
 
         if plot_tally_error == True:
             if self.problem_name:
@@ -219,7 +219,7 @@ class Compare_Runs(object):
                 savepath = self.analysis_dir+'/tally_error_compare.pdf'
 
             logger.info("plotting tally error at %s" %savepath)
-            self.plot_tally_error(savepath=savepath)
+            self.plot_tally_error(savepath=savepath, **kwargs)
 
         if make_fomtable == True:
             fomtable = self.make_table('fom_frame')
