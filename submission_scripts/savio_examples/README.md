@@ -1,7 +1,7 @@
 ## Directions for executing advantg and MCNP on Savio
 
 #### Files in this folder:
-* `runadvantg.sh` shell script to run advantg
+* `runadvantg.sub` shell script to run advantg
   * All of the lines starting with a # in this file are things used by the
     SLURM submission to allocate job size. Based in the comments of the file,
     you should be able to deduce what job size you need. If you're comparing
@@ -19,7 +19,7 @@
       /global/home/groups/co_nuclear/ADVANTG/bin/advantg
       ```
     which should be the same for you.
-* `runmcnp.sh` shell script to run mcnp
+* `runmcnp.sub` shell script to run mcnp
   * All of the lines starting with a # in this file are things used by the
     SLURM submission to allocate job size. Based in the comments of the file,
     you should be able to deduce what job size you need. If you're comparing
@@ -43,8 +43,8 @@
     with `o=out` (named out generically here). 
 * `bash_additions.rc` file with environment variables that need to be added to
   the `.bashrc` file located in your user $HOME directory on savio. Make sure
-  to edit your .bashrc file before you try to use either runmcnp.sh or
-  runadvantg.sh
+  to edit your .bashrc file before you try to use either runmcnp.sub or
+  runadvantg.sub
 
 #### Submitting a job:
 
@@ -77,7 +77,7 @@
 * Interactive jobs are useful if you want to make sure an MCNP run is working
   as you expect and you can watch it run in real time. Its also slower because
   of screen printing, so don't use it for all of your jobs. 
-* The `.sh` scripts in this folder are used to run a single advantg or mcnp run
+* The `.sub` scripts in this folder are used to run a single advantg or mcnp run
   at a time. The ones in the folder above this are used to run several in
   sequence. You can use them as references to make more sophisticated scripts
   as you see fit. The lines without # symbols are shell scripts, so they should
