@@ -1,0 +1,11 @@
+export GRP_DIR=/global/home/groups/ac_nuclear
+
+export SCALE_DIR=${GRP_DIR}/SCALE6.2b
+export EXNIHILO_DIR=${GRP_DIR}/exnihilo
+export ADVANTG_DIR=${GRP_DIR}/ADVANTG
+export TPL_DIR=${GRP_DIR}/TPLs
+
+export PATH="$GRP_DIR/bin:${PATH}"
+export DATAPATH=/global/scratch/co_nuclear/MCNP/MCNP_DATA
+
+source $ADVANTG_DIR/advantg_update.rc
