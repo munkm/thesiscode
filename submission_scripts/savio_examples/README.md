@@ -46,6 +46,29 @@
   to edit your .bashrc file before you try to use either runmcnp.sh or
   runadvantg.sh
 
+#### Submitting a job:
+
+* A MCNP job:
+  * **to submit**: execute `$ sbatch runmcnp.sub`
+  * **to check status**: execute `squeue -u` 
+    * This will list all of the jobs in the submission queue under your
+      username. 
+  * **to cancel**: execute `scancel 12345` where 12345 is the job ID#
+    * To get the job ID number, look in the first column of squeue. Here's an
+      example:
+      ```
+          JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           1838787    savio2 a1508537 bracewel PD       0:00      1 (JobHeldUser)
+           1838864    savio2 a1508537 bracewel PD       0:00      1 (JobHeldUser)
+           1838960    savio2 a1508538 bracewel PD       0:00      1 (JobHeldUser)
+           1838984    savio2 a1508538 bracewel PD       0:00      1 (JobHeldUser)
+      ```
+
+* An ADVANTG job:
+  * **to submit**: execute `$ sbatch runadvantg.sub`
+  * **to check status**: see above
+  * **to cancel**: see above
+
 #### Other useful things:
 
 * The savio documentation on submissions is here:
@@ -58,4 +81,20 @@
   at a time. The ones in the folder above this are used to run several in
   sequence. You can use them as references to make more sophisticated scripts
   as you see fit. The lines without # symbols are shell scripts, so they should
-  execute similarly between different job submission software. 
+  execute similarly between different job submission software.
+* If for whatever reason you can't find MCNP or advantg after modifying your
+  .bashrc file try the following:
+  * executing `$ source ~/.bashrc` 
+    * this will re-source your modified bashrc file. If you are trying to run
+      MCNP or ADVANTG in the same session taht you modified this file, you need
+      your environment to be updated.
+  * executing `$ groups` 
+    * For my user profile on savio, this results in:
+        ```
+        $ groups
+        ucb savio savio_scaledev savio_mcnp savio_scale6 savio_scale6b
+        savio_exnihilo savio_advantg co_nuclear fc_neutronics
+        ```
+      If you are not in `savio_mcnp` or `savio_advantg`, contact rachel or max
+      to get added. 
+
