@@ -32,7 +32,7 @@ for key,value in problems.iteritems():
     # anisotropy statistics. An example with Metric 3 can be found in Figure
     # 4.11 (a) through (c) in my dissertation.
     run.do_compare_analysis(
-            plot_compare_corrs=True)
+            plot_compare_corrs=True,
             plot_compare_corrs_median=True,
             plot_compare_corrs_mean=True)
 
