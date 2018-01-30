@@ -1,0 +1,18 @@
+#!/bin/sh
+# 
+# This is the header used by sample_study to generate an MCNP pbs submission
+# script for the study. 
+# Problem: allmc
+# PID: 2017-05-17
+#
+#PBS -N cadis_demo_MC
+#PBS -o mcnp.pbs.out
+#PBS -j oe
+#PBS -M munkm@ornl.gov
+#PBS -l walltime=24:00:00
+#PBS -l nodes=1:ppn=32
+LAUNCHER=/opt/openmpi-1.6.5-gcc/bin/mpiexec
+LAUNCHER_ARGS=""
+ADVANTG=/home/m15/install/advantg/bin/advantg
+MCNP=/projects/MCNP5_v1.6/MCNP_CODE/bin/mcnp5.mpi
+

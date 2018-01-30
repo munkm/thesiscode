@@ -1,0 +1,18 @@
+#!/bin/sh
+# 
+# This is the header used by sample_study to generate an ADVANTG 
+# pbs submission script for the study. 
+# Problem: allprobs
+# PID: 2017-5-17
+#
+#PBS -N cad_adv_hybrid
+#PBS -o cad-adv-hybrid.pbs.out
+#PBS -j oe
+#PBS -M munkm@ornl.gov
+#PBS -l walltime=8:00:00
+#PBS -l nodes=1:ppn=16,pmem=8000mb
+LAUNCHER=/opt/openmpi-1.6.5-gcc/bin/mpiexec
+LAUNCHER_ARGS=""
+ADVANTG=/home/m15/install/advantg/bin/advantg
+
+
